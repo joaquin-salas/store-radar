@@ -28,7 +28,7 @@ export interface ViewDef {
 export const VIEWS: readonly ViewDef[] = [
   { id: "live", label: "Live", allStores: false, usesRange: false, ready: true },
   { id: "analytics", label: "Analytics", allStores: true, usesRange: true, ready: true },
-  { id: "visits", label: "Visits", allStores: false, usesRange: false, ready: false },
+  { id: "visits", label: "Visits", allStores: false, usesRange: false, ready: true },
   { id: "customers", label: "Customers", allStores: true, usesRange: false, ready: false },
   { id: "flows", label: "Flows", allStores: true, usesRange: true, ready: false },
 ];

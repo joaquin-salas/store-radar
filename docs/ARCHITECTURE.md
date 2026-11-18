@@ -111,6 +111,10 @@ assistant docks on the left and the page fills the rest.
   the API takes, validated with the same schema (`lib/range-params.ts`). The
   header carries the range to other range views, and remembers it across a
   detour through a view without one. Custom dates apply on blur or Enter.
+- **Visits** (`/<store>/visits`) keeps its table state in the URL too:
+  `?date=&segment=&sort=&dir=&page=` (`lib/visits-params.ts`; defaults are
+  left out). TanStack Table v9 runs in manual mode: sorting and paging are done
+  by `/api/visits`, the table only renders the page and owns no data.
 - **Assistant panel** (`components/assistant/`): lives in the root layout, so
   it keeps its state across navigation. On desktop (≥1024 px) it is a resizable
   panel (react-resizable-panels; open state and width remembered per browser);
