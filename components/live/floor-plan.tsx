@@ -508,7 +508,7 @@ const flowEndName = (end: string) =>
   end === "street" ? "Street" : ZONE_LABELS[end as keyof typeof ZONE_LABELS];
 
 /** The building outline as a wall, leaving a gap for the door on the shopfront. */
-function wallPath(plan: Plan): string {
+export function wallPath(plan: Plan): string {
   const pts = plan.outline;
   const { x1, x2 } = plan.door;
   const d = plan.depth;
@@ -519,7 +519,7 @@ function wallPath(plan: Plan): string {
   return [`M${x1} ${d}`, ...walk.map(([x, y]) => `L${x} ${y}`), `L${x2} ${d}`].join(" ");
 }
 
-function DoorSwing({ plan }: { plan: Plan }) {
+export function DoorSwing({ plan }: { plan: Plan }) {
   const { x1, x2 } = plan.door;
   const d = plan.depth;
   const half = (x2 - x1) / 2;

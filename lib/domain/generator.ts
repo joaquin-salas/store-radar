@@ -9,7 +9,7 @@
 import { allCustomers, customersOfStore } from "./customers";
 import { PRODUCT_ZONES, ZONE_BEHAVIOUR, getStore } from "./catalog";
 import { createRng, hashString } from "./random";
-import { type LocalDate, type LocalDateTime, dayOfWeek, pad2, secondsOfDay } from "./time";
+import { type LocalDate, type LocalDateTime, dayOfWeek, formatClock, secondsOfDay } from "./time";
 import type {
   DaySummary,
   HourAgg,
@@ -68,10 +68,6 @@ const clamp = (v: number, min: number, max: number) => Math.min(max, Math.max(mi
 /** Dwell time around a mean, skewed so most stops are short and a few are long. */
 function dwell(rng: ReturnType<typeof createRng>, mean: number): number {
   return Math.max(5, Math.round(mean * (0.35 + rng.next() * rng.next() * 2.6)));
-}
-
-function formatTime(sec: number): string {
-  return `${pad2(Math.floor(sec / 3600))}:${pad2(Math.floor((sec % 3600) / 60))}:${pad2(sec % 60)}`;
 }
 
 /**
@@ -169,7 +165,7 @@ export function generateDay(store: Store, date: LocalDate): GeneratedDay {
         id: `${store.id}-${compactDate}-${String(seq).padStart(5, "0")}`,
         storeId: store.id,
         date,
-        enteredAt: formatTime(v.enteredSec),
+        enteredAt: formatClock(v.enteredSec),
         visitorId: visitorHash.toString(16).padStart(8, "0"),
         ...v,
       };

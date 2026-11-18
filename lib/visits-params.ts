@@ -4,7 +4,7 @@
  * one by one, so a bad `page` doesn't reset the chosen date.
  */
 import { z } from "zod";
-import { VISIT_SEGMENTS, VISIT_SORT_FIELDS, type VisitsQuery } from "./domain/schemas";
+import { VISIT_ID_PATTERN, VISIT_SEGMENTS, VISIT_SORT_FIELDS, type VisitsQuery } from "./domain/schemas";
 import { isLocalDate } from "./domain/time";
 
 export const VISITS_PAGE_SIZE = 25;
@@ -25,7 +25,10 @@ const fields = z.object({
   page: z.coerce.number().int().min(0).catch(0),
 });
 
-export type VisitsParams = Omit<VisitsQuery, "store" | "pageSize">;
+export type VisitsParams = Omit<VisitsQuery, "store" | "pageSize"> & {
+  /** Visit open in the detail drawer. */
+  visit?: string;
+};
 
 type SearchLike = Pick<URLSearchParams, "get">;
 
@@ -37,7 +40,12 @@ export function visitsFromSearch(search: SearchLike): VisitsParams {
     dir: search.get("dir") ?? undefined,
     page: search.get("page") ?? undefined,
   });
-  return { ...parsed, date: date && isLocalDate(date) ? date : undefined };
+  const visit = search.get("visit");
+  return {
+    ...parsed,
+    date: date && isLocalDate(date) ? date : undefined,
+    visit: visit && VISIT_ID_PATTERN.test(visit) ? visit : undefined,
+  };
 }
 
 /** Query string for the table state, leaving out defaults to keep URLs short. */
@@ -48,6 +56,7 @@ export function visitsToSearch(p: VisitsParams): string {
   if (p.sort !== "enteredAt") s.set("sort", p.sort);
   if (p.dir !== "desc") s.set("dir", p.dir);
   if (p.page > 0) s.set("page", String(p.page));
+  if (p.visit) s.set("visit", p.visit);
   const out = s.toString();
   return out ? `?${out}` : "";
 }

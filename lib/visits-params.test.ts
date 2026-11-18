@@ -11,23 +11,30 @@ describe("visits params", () => {
       sort: "enteredAt",
       dir: "desc",
       page: 0,
+      visit: undefined,
     });
   });
 
   it("reads valid values and drops invalid ones field by field", () => {
-    expect(visitsFromSearch(qs("date=2026-11-17&segment=returning&sort=stops&dir=asc&page=3"))).toEqual({
+    expect(
+      visitsFromSearch(
+        qs("date=2026-11-17&segment=returning&sort=stops&dir=asc&page=3&visit=bcn-pdg-20261117-00042"),
+      ),
+    ).toEqual({
       date: "2026-11-17",
       segment: "returning",
       sort: "stops",
       dir: "asc",
       page: 3,
+      visit: "bcn-pdg-20261117-00042",
     });
-    expect(visitsFromSearch(qs("date=2026-13-40&segment=vip&page=-2&dir=up"))).toEqual({
+    expect(visitsFromSearch(qs("date=2026-13-40&segment=vip&page=-2&dir=up&visit=../x"))).toEqual({
       date: undefined,
       segment: "all",
       sort: "enteredAt",
       dir: "desc",
       page: 0,
+      visit: undefined,
     });
   });
 

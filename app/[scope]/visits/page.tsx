@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { VisitsView } from "@/components/visits/visits-view";
 import { STORES, getStore } from "@/lib/domain/catalog";
+import { getFloorPlan } from "@/lib/domain/layout";
 
 // Visits shows one store at a time; `/all/visits` is redirected in next.config.ts.
 export function generateStaticParams() {
@@ -28,7 +29,8 @@ async function StoreVisits({ params }: Pick<PageProps<"/[scope]/visits">, "param
   const { scope } = await params;
   const store = getStore(scope);
   if (!store) notFound();
-  return <VisitsView storeId={store.id} />;
+  // The floor plan is static configuration: render it with the page, no API call needed.
+  return <VisitsView storeId={store.id} storeName={store.name} plan={getFloorPlan(store.id)} />;
 }
 
 function VisitsSkeleton() {

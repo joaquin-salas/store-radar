@@ -4,6 +4,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { DateField } from "@/components/filters/date-field";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import type { FloorPlan } from "@/lib/domain/layout";
 import { VISIT_SEGMENTS } from "@/lib/domain/schemas";
 import { localNow } from "@/lib/domain/time";
 import { formatDateRange } from "@/lib/format";
@@ -15,10 +16,19 @@ import {
   visitsFromSearch,
   visitsToSearch,
 } from "@/lib/visits-params";
+import { VisitSheet } from "./visit-sheet";
 import { VisitsTable } from "./visits-table";
 
 /** Every visit of one store-day, filterable and sortable; state lives in the URL. */
-export function VisitsView({ storeId }: { storeId: string }) {
+export function VisitsView({
+  storeId,
+  storeName,
+  plan,
+}: {
+  storeId: string;
+  storeName: string;
+  plan: FloorPlan;
+}) {
   const router = useRouter();
   const pathname = usePathname();
   const params = visitsFromSearch(useSearchParams());
@@ -26,19 +36,24 @@ export function VisitsView({ storeId }: { storeId: string }) {
   const date = params.date ?? today;
   const isToday = date === today;
 
+  // The open visit isn't part of the list query, so opening one doesn't refetch the table.
+  const { visit: openVisit, ...listParams } = params;
   const { data, isPending, isError } = useVisits({
     store: storeId,
-    ...params,
+    ...listParams,
     date,
     pageSize: VISITS_PAGE_SIZE,
   });
 
   // Filters reset to the first page; sorting and paging keep the rest.
-  const update = (next: Partial<VisitsParams>, resetPage = true) => {
+  // Opening a visit adds a history entry, so Back closes the drawer.
+  const update = (next: Partial<VisitsParams>, resetPage = true, push = false) => {
     const merged = { ...params, ...next, ...(resetPage ? { page: 0 } : {}) };
     // Today is the default, so keep it out of the URL.
     if (merged.date === today) merged.date = undefined;
-    router.replace(`${pathname}${visitsToSearch(merged)}`, { scroll: false });
+    const href = `${pathname}${visitsToSearch(merged)}`;
+    if (push) router.push(href, { scroll: false });
+    else router.replace(href, { scroll: false });
   };
 
   return (
@@ -87,8 +102,16 @@ export function VisitsView({ storeId }: { storeId: string }) {
           params={params}
           onSortChange={(sort, dir) => update({ sort, dir })}
           onPageChange={(page) => update({ page }, false)}
+          onOpenVisit={(id) => update({ visit: id }, false, true)}
         />
       )}
+
+      <VisitSheet
+        visitId={openVisit}
+        plan={plan}
+        storeName={storeName}
+        onClose={() => update({ visit: undefined }, false)}
+      />
     </div>
   );
 }

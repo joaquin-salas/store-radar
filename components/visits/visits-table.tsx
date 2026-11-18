@@ -52,7 +52,15 @@ const columns = helper.columns([
   helper.accessor("totalDwellSec", {
     header: "Time inside",
     sortDescFirst: true,
-    cell: (info) => <span className="tabular-nums">{formatDuration(info.getValue())}</span>,
+    cell: ({ row, getValue }) =>
+      row.original.inside ? (
+        <span className="flex flex-col">
+          <span className="tabular-nums">{formatDuration(getValue())} so far</span>
+          <span className="text-muted-foreground text-xs">Still inside</span>
+        </span>
+      ) : (
+        <span className="tabular-nums">{formatDuration(getValue())}</span>
+      ),
   }),
   helper.accessor("checkout", {
     header: "Checkout",
@@ -78,12 +86,14 @@ export function VisitsTable({
   params,
   onSortChange,
   onPageChange,
+  onOpenVisit,
 }: {
   page: VisitsPage | undefined;
   loading: boolean;
   params: VisitsParams;
   onSortChange: (sort: VisitsQuery["sort"], dir: VisitsQuery["dir"]) => void;
   onPageChange: (page: number) => void;
+  onOpenVisit: (visitId: string) => void;
 }) {
   const sorting: SortingState = [{ id: params.sort, desc: params.dir === "desc" }];
   const pagination: PaginationState = { pageIndex: params.page, pageSize: VISITS_PAGE_SIZE };
@@ -164,10 +174,26 @@ export function VisitsTable({
             </TableRow>
           ) : (
             table.getRowModel().rows.map((row) => (
-              <TableRow key={row.id}>
+              // The whole row opens the visit for pointer users; the entry time is
+              // the keyboard and screen-reader control.
+              <TableRow key={row.id} onClick={() => onOpenVisit(row.original.id)} className="cursor-pointer">
                 {row.getAllCells().map((cell) => (
                   <TableCell key={cell.id} className="px-3 align-top whitespace-normal">
-                    <table.FlexRender cell={cell} />
+                    {cell.column.id === "enteredAt" ? (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onOpenVisit(row.original.id);
+                        }}
+                        aria-label={`Open visit at ${row.original.enteredAt.slice(0, 5)}`}
+                        className="text-primary focus-visible:ring-ring/50 rounded font-medium underline-offset-2 outline-none hover:underline focus-visible:ring-3"
+                      >
+                        <table.FlexRender cell={cell} />
+                      </button>
+                    ) : (
+                      <table.FlexRender cell={cell} />
+                    )}
                   </TableCell>
                 ))}
               </TableRow>
@@ -225,10 +251,14 @@ function Visitor({ visit }: { visit: VisitRow }) {
   );
 }
 
-/** Zones after the entrance (every visit starts there), e.g. "Womenswear → Fitting rooms". */
+/**
+ * Zones after the entrance (every visit starts there), e.g. "Womenswear → Fitting rooms".
+ * A visit still in progress ends in "→ …": the rest of its route isn't known yet.
+ */
 function Path({ visit }: { visit: VisitRow }) {
   const stops = visit.path.slice(1);
-  if (stops.length === 0) return <span className="text-muted-foreground">Entrance only</span>;
+  if (stops.length === 0)
+    return <span className="text-muted-foreground">{visit.inside ? "Entrance …" : "Entrance only"}</span>;
   return (
     <span className="block min-w-48 text-sm">
       {stops.map((s, i) => (
@@ -241,6 +271,11 @@ function Path({ visit }: { visit: VisitRow }) {
           {ZONE_LABELS[s.zone]}
         </span>
       ))}
+      {visit.inside && (
+        <span className="text-muted-foreground" aria-label="and still going">
+          {" → …"}
+        </span>
+      )}
     </span>
   );
 }

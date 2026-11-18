@@ -7,6 +7,7 @@ import {
   getCustomersPage,
   getOverview,
   getTraffic,
+  getVisit,
   getVisitsPage,
   getZones,
   previousRange,
@@ -113,5 +114,90 @@ describe("tables", () => {
     expect(gold.rows.every((r) => r.tier === "gold" && r.homeStoreId === "vlc-colon")).toBe(true);
     const search = getCustomersPage({ ...base, q: "C00042" }, NOW);
     expect(search.rows.map((r) => r.id)).toEqual(["C00042"]);
+  });
+});
+
+describe("visit detail", () => {
+  const visitsBase = {
+    store: "mad-granvia",
+    segment: "all",
+    sort: "enteredAt",
+    dir: "asc",
+    page: 0,
+    pageSize: 5,
+  } as const;
+
+  it("returns the visit with a timeline that adds up", () => {
+    const row = getVisitsPage({ ...visitsBase, date: "2026-11-17" }, NOW).rows[2];
+    const v = getVisit(row.id, NOW)!;
+    expect(v.id).toBe(row.id);
+    expect(v.timeline.map((s) => s.zone)).toEqual(row.path.map((s) => s.zone));
+    expect(v.timeline[0].enteredAt).toBe(row.enteredAt);
+    // Each stop starts when the previous one ends; the visit ends after the last.
+    const sec = (t: string) =>
+      t
+        .split(":")
+        .map(Number)
+        .reduce((a, n) => a * 60 + n, 0);
+    for (let i = 1; i < v.timeline.length; i++) {
+      expect(sec(v.timeline[i].enteredAt)).toBe(
+        sec(v.timeline[i - 1].enteredAt) + v.timeline[i - 1].dwellSec,
+      );
+    }
+    expect(sec(v.leftAt!) - sec(v.timeline[0].enteredAt)).toBe(row.totalDwellSec);
+    expect(v.inside).toBe(false);
+  });
+
+  it("returns null for unknown, malformed or future visits", () => {
+    expect(getVisit("mad-granvia-20261117-99999", NOW)).toBeNull();
+    expect(getVisit("nowhere-20261117-00001", NOW)).toBeNull();
+    expect(getVisit("mad-granvia-20261340-00001", NOW)).toBeNull();
+    expect(getVisit("not-a-visit", NOW)).toBeNull();
+    // Today's visits after "now" don't exist yet.
+    const today = getVisitsPage({ ...visitsBase, date: NOW.date, dir: "desc" }, NOW);
+    const lastSeq = Number(today.rows[0].id.slice(-5));
+    expect(getVisit(`mad-granvia-20261118-${String(lastSeq + 1).padStart(5, "0")}`, NOW)).toBeNull();
+  });
+});
+
+describe("visit in progress", () => {
+  const today = {
+    store: "mad-granvia",
+    date: NOW.date,
+    sort: "enteredAt",
+    dir: "desc",
+    page: 0,
+    pageSize: 100,
+  } as const;
+  const nowSec = 16 * 3600 + 30 * 60;
+  const sec = (t: string) =>
+    t
+      .split(":")
+      .map(Number)
+      .reduce((a, n) => a * 60 + n, 0);
+
+  it("shows only what has happened so far, in the list and the detail", () => {
+    const rows = getVisitsPage({ ...today, segment: "all" }, NOW).rows;
+    const inside = rows.filter((r) => r.inside);
+    expect(inside.length).toBeGreaterThan(0);
+    for (const r of inside) expect(sec(r.enteredAt) + r.totalDwellSec).toBe(nowSec);
+    // Finished visits are untouched.
+    expect(rows.filter((r) => !r.inside).every((r) => sec(r.enteredAt) + r.totalDwellSec <= nowSec)).toBe(
+      true,
+    );
+
+    const v = getVisit(inside[0].id, NOW)!;
+    expect(v.inside).toBe(true);
+    expect(v.leftAt).toBeNull();
+    expect(v.totalDwellSec).toBe(inside[0].totalDwellSec);
+    expect(v.timeline.map((s) => s.zone)).toEqual(inside[0].path.map((s) => s.zone));
+    const last = v.timeline.at(-1)!;
+    expect(sec(last.enteredAt) + last.dwellSec).toBe(nowSec);
+    expect(v.checkout).toBe(v.timeline.some((s) => s.zone === "checkout"));
+  });
+
+  it("filters on what is known now", () => {
+    const rows = getVisitsPage({ ...today, segment: "checkout" }, NOW).rows;
+    expect(rows.every((r) => r.checkout && r.path.some((s) => s.zone === "checkout"))).toBe(true);
   });
 });

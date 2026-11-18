@@ -46,6 +46,13 @@ export const scopedRangeSchema = z.object({
 export const VISIT_SORT_FIELDS = ["enteredAt", "totalDwellSec", "stops"] as const;
 export const VISIT_SEGMENTS = ["all", "registered", "anonymous", "new", "returning", "checkout"] as const;
 
+/** Visit ids look like `mad-granvia-20261118-00042` (store, date, sequence). */
+export const VISIT_ID_PATTERN = /^([a-z]+(?:-[a-z]+)*)-(\d{4})(\d{2})(\d{2})-(\d{5})$/;
+export const visitIdSchema = z
+  .string()
+  .regex(VISIT_ID_PATTERN)
+  .describe("Visit id, e.g. mad-granvia-20261118-00042");
+
 export const visitsQuerySchema = z.object({
   store: storeIdSchema,
   date: localDateSchema.optional().describe("Defaults to today"),

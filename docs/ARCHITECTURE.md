@@ -59,6 +59,7 @@ Next.js or React, which keeps it unit-testable and reusable by the AI tools.
 | `/api/hours`            | same                                                          | Average visitors per hour of day                                                            |
 | `/api/compare`          | `preset` \| `from`+`to`                                       | KPIs per store                                                                              |
 | `/api/visits`           | `store`, `date`, `segment`, `sort`, `dir`, `page`, `pageSize` | Paginated visits                                                                            |
+| `/api/visits/[id]`      | —                                                             | One visit with its timeline (time each zone was reached, when they left)                    |
 | `/api/customers`        | `q`, `store`, `tier`, `sort`, `dir`, `page`, `pageSize`       | Paginated customers                                                                         |
 | `/api/chat`             | POST (AI SDK UI messages)                                     | Streamed assistant response                                                                 |
 
@@ -115,6 +116,11 @@ assistant docks on the left and the page fills the rest.
   `?date=&segment=&sort=&dir=&page=` (`lib/visits-params.ts`; defaults are
   left out). TanStack Table v9 runs in manual mode: sorting and paging are done
   by `/api/visits`, the table only renders the page and owns no data.
+  Clicking a row opens a drawer (`?visit=<id>`, so it can be linked and Back
+  closes it) with the route on the floor plan and a timeline from
+  `/api/visits/[id]`. A visit still in progress shows only what has happened
+  so far, in the list and the drawer (`visitAsOf` in the service): real
+  sensors can't know the rest of the route. Filters and sorts use the same view.
 - **Assistant panel** (`components/assistant/`): lives in the root layout, so
   it keeps its state across navigation. On desktop (≥1024 px) it is a resizable
   panel (react-resizable-panels; open state and width remembered per browser);

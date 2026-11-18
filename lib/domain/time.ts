@@ -75,6 +75,11 @@ export function secondsOfDay(t: Pick<LocalDateTime, "hour" | "minute" | "second"
   return t.hour * 3600 + t.minute * 60 + t.second;
 }
 
+/** Seconds since midnight → "HH:MM:SS". */
+export function formatClock(sec: number): string {
+  return `${pad2(Math.floor(sec / 3600))}:${pad2(Math.floor((sec % 3600) / 60))}:${pad2(sec % 60)}`;
+}
+
 export function pad2(n: number): string {
   return String(n).padStart(2, "0");
 }

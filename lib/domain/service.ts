@@ -2,14 +2,23 @@
  * Query layer: the functions the API routes and the AI assistant call.
  * Every function takes an optional `now` so results are reproducible in tests.
  */
-import { STORES, getStore } from "./catalog";
+import { STORES, ZONE_LABELS, getStore } from "./catalog";
 import { allCustomers, getCustomer } from "./customers";
 import { getDayStatus } from "./status";
 import { getDaySummary, getDayVisits } from "./generator";
 import { type Granularity, computeKpis, funnel, hourProfile, trafficSeries, zoneStats } from "./metrics";
 import { type DateRange, isLiveRange as isLive, previousRange, rangeDays, resolveRange } from "./range";
-import type { CustomersQuery, RangeInput, VisitsQuery } from "./schemas";
-import { type LocalDate, type LocalDateTime, addDays, eachDay, localNow } from "./time";
+import { type CustomersQuery, type RangeInput, VISIT_ID_PATTERN, type VisitsQuery } from "./schemas";
+import {
+  type LocalDate,
+  type LocalDateTime,
+  addDays,
+  eachDay,
+  formatClock,
+  isLocalDate,
+  localNow,
+  secondsOfDay,
+} from "./time";
 import type { Customer, DaySummary, InStoreZone, Visit } from "./types";
 
 export { type DateRange, previousRange, resolveRange } from "./range";
@@ -124,6 +133,11 @@ function paginate<T>(rows: T[], page: number, pageSize: number): Page<T> {
 export interface VisitRow extends Omit<Visit, "enteredSec"> {
   customerName: string | null;
   customerTier: Customer["tier"] | null;
+  /**
+   * Still in the store at `now` (today only). Path, time inside and checkout
+   * then cover only what has happened so far: real sensors can't know the rest.
+   */
+  inside: boolean;
 }
 
 export function getVisitsPage(
@@ -134,7 +148,12 @@ export function getVisitsPage(
   date: LocalDate;
 } {
   const date = q.date ?? now.date;
-  let visits = getDayVisits(q.store, date, now);
+  const nowSec = date === now.date ? secondsOfDay(now) : Infinity;
+  // Filter and sort on what is known now, so "Reached checkout" or "longest"
+  // never count steps an in-progress visit hasn't taken yet.
+  const known = getDayVisits(q.store, date, now).map((v) => visitAsOf(v, nowSec));
+  const insideIds = new Set(known.filter((k) => k.inside).map((k) => k.visit.id));
+  let visits = known.map((k) => k.visit);
 
   if (q.segment === "registered") visits = visits.filter((v) => v.customerId);
   if (q.segment === "anonymous") visits = visits.filter((v) => !v.customerId);
@@ -157,12 +176,88 @@ export function getVisitsPage(
     store: q.store,
     date,
     ...page,
-    rows: page.rows.map((visit) => {
-      const { enteredSec, ...v } = visit;
-      void enteredSec; // internal sort key, not part of the API row
-      const c = v.customerId ? getCustomer(v.customerId) : undefined;
-      return { ...v, customerName: c?.name ?? null, customerTier: c?.tier ?? null };
-    }),
+    rows: page.rows.map((v) => toVisitRow(v, insideIds.has(v.id))),
+  };
+}
+
+function toVisitRow(visit: Visit, inside: boolean): VisitRow {
+  const { enteredSec, ...v } = visit;
+  void enteredSec; // internal sort key, not part of the API row
+  const c = v.customerId ? getCustomer(v.customerId) : undefined;
+  return { ...v, customerName: c?.name ?? null, customerTier: c?.tier ?? null, inside };
+}
+
+interface KnownVisit {
+  /** The visit as known at `nowSec`. */
+  visit: Visit;
+  timeline: VisitStop[];
+  /** Second of the day the visitor left, or null while still inside. */
+  leftSec: number | null;
+  inside: boolean;
+}
+
+/**
+ * A visit as the sensors know it at `nowSec` (Infinity for past days): an
+ * in-progress visit keeps only the stops reached so far, with time inside and
+ * checkout up to now.
+ */
+export function visitAsOf(visit: Visit, nowSec: number): KnownVisit {
+  const timeline: VisitStop[] = [];
+  let t = visit.enteredSec;
+  for (const s of visit.path) {
+    if (t > nowSec) break;
+    timeline.push({
+      zone: s.zone,
+      label: ZONE_LABELS[s.zone],
+      enteredAt: formatClock(t),
+      dwellSec: Math.min(s.dwellSec, nowSec - t),
+    });
+    t += s.dwellSec;
+  }
+  if (t <= nowSec) return { visit, timeline, leftSec: t, inside: false };
+  return {
+    visit: {
+      ...visit,
+      path: timeline.map(({ zone, dwellSec }) => ({ zone, dwellSec })),
+      totalDwellSec: nowSec - visit.enteredSec,
+      checkout: timeline.some((s) => s.zone === "checkout"),
+    },
+    timeline,
+    leftSec: null,
+    inside: true,
+  };
+}
+
+export interface VisitStop {
+  zone: InStoreZone;
+  label: string;
+  /** Store-local time the visitor reached this zone, "HH:MM:SS". */
+  enteredAt: string;
+  dwellSec: number;
+}
+
+export interface VisitDetail extends VisitRow {
+  /** The path with the time each zone was reached. */
+  timeline: VisitStop[];
+  /** When the visitor left, "HH:MM:SS"; null while still inside. */
+  leftAt: string | null;
+}
+
+/** One visit by id (`<store>-<yyyymmdd>-<seq>`), or null if it doesn't exist (yet). */
+export function getVisit(visitId: string, now: LocalDateTime = localNow()): VisitDetail | null {
+  const m = VISIT_ID_PATTERN.exec(visitId);
+  if (!m) return null;
+  const [, storeId, y, mo, d] = m;
+  const date = `${y}-${mo}-${d}`;
+  if (!getStore(storeId) || !isLocalDate(date)) return null;
+  const visit = getDayVisits(storeId, date, now).find((v) => v.id === visitId);
+  if (!visit) return null;
+
+  const known = visitAsOf(visit, date === now.date ? secondsOfDay(now) : Infinity);
+  return {
+    ...toVisitRow(known.visit, known.inside),
+    timeline: known.timeline,
+    leftAt: known.leftSec === null ? null : formatClock(known.leftSec),
   };
 }
 

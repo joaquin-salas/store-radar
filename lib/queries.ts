@@ -15,6 +15,7 @@ import type {
   getHourProfile,
   getOverview,
   getTraffic,
+  getVisit,
   getVisitsPage,
   getZones,
   listStores,
@@ -38,6 +39,7 @@ export type Funnel = ReturnType<typeof getFunnel>;
 export type HourProfile = ReturnType<typeof getHourProfile>;
 export type StoreComparison = ReturnType<typeof compareStores>;
 export type VisitsPage = ReturnType<typeof getVisitsPage>;
+export type VisitDetail = NonNullable<ReturnType<typeof getVisit>>;
 export type CustomersPage = ReturnType<typeof getCustomersPage>;
 export type StoreList = { stores: ReturnType<typeof listStores> };
 
@@ -61,6 +63,7 @@ export const queryKeys = {
   hours: (p: ScopeParams) => [...queryKeys.all, "hours", p] as const,
   compare: (p: ScopeParams) => [...queryKeys.all, "compare", p] as const,
   visits: (p: Partial<VisitsQuery>) => [...queryKeys.all, "visits", p] as const,
+  visit: (id: string) => [...queryKeys.all, "visit", id] as const,
   customers: (p: Partial<CustomersQuery>) => [...queryKeys.all, "customers", p] as const,
 };
 
@@ -109,6 +112,16 @@ export function useVisits(p: Partial<VisitsQuery> & { store: string }) {
     queryFn: () => fetchJson<VisitsPage>("/api/visits", { ...p }),
     placeholderData: keepPreviousData,
     refetchInterval: (q) => (q.state.data && q.state.data.date === localNow().date ? LIVE_REFRESH_MS : false),
+  });
+}
+
+/** One visit with its timeline. Today's visits refresh while the visitor may still be inside. */
+export function useVisit(visitId: string | undefined) {
+  return useQuery({
+    queryKey: queryKeys.visit(visitId ?? ""),
+    queryFn: () => fetchJson<VisitDetail>(`/api/visits/${visitId}`),
+    enabled: Boolean(visitId),
+    refetchInterval: (q) => (q.state.data?.inside ? LIVE_REFRESH_MS : false),
   });
 }
 
