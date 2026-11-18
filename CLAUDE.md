@@ -36,3 +36,21 @@ Read `docs/ARCHITECTURE.md` before structural changes.
   (`node_modules/next/dist/docs`, `node_modules/ai/docs`,
   `node_modules/@tanstack/react-table/skills`) before using unfamiliar APIs.
 - Format with Prettier (`pnpm format`).
+
+## Workflow
+
+1. **Work on `dev`.** Never edit or commit on `main` directly. Check
+   `git branch --show-current` before starting.
+2. **Verify before reporting done:** `pnpm format`, `pnpm typecheck`,
+   `pnpm lint`, `pnpm test`, `pnpm build`, and check UI changes in the browser
+   (desktop and mobile width).
+3. **Never commit or push on your own.** Leave changes uncommitted and report
+   what changed. Commit only when the user says so.
+4. **Commits use [Conventional Commits](https://www.conventionalcommits.org/):**
+   `<type>(<scope>): <summary>` in the imperative, lower case, no trailing
+   period. Types: `feat`, `fix`, `refactor`, `test`, `docs`, `style`, `chore`,
+   `ci`, `perf`. Scopes: `domain`, `api`, `live`, `ui`, `ai`, `docs`, `ci`.
+   Example: `feat(live): add occupancy vs. capacity alerts`. Add a body when
+   the why isn't obvious. One logical change per commit.
+5. **Shipping to `main`** happens only when the user asks: switch to `main`,
+   fast-forward merge `dev`, push, confirm CI passes, switch back to `dev`.
