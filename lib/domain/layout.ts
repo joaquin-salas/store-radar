@@ -1,75 +1,97 @@
 /**
- * Floor plans: where each zone sits and where the sensors are mounted.
+ * Floor plans: building shell, shopfront, zones, fixtures and sensor positions.
  *
- * Coordinates are abstract plan units (0–100 wide). The store interior spans
- * y = 0…58 and the street strip runs along the bottom. Three templates cover the
- * chain; some stores use a mirrored copy so they don't all look identical.
+ * Units are metres; y grows from the back wall (0) to the shopfront (`depth`),
+ * and the street runs along the front. Each store has a plan spec — hand-made
+ * for Madrid Gran Vía, generated from a simple template for the others until
+ * they're designed — normalised here into one `FloorPlan` shape for the UI.
  */
 import { STORES, getStore } from "./catalog";
-import type { InStoreZone, ZoneType } from "./types";
+import { type Point, type Polygon, inPolygon, polygonArea, rectPolygon } from "./geometry";
+import { MAD_GRANVIA } from "./plans/mad-granvia";
+import type { InStoreZone } from "./types";
 
-export interface Rect {
-  x: number;
-  y: number;
-  w: number;
-  h: number;
-}
-
-export type SensorType = "street-counter" | "door-counter" | "zone-sensor" | "checkout-sensor";
-
-export interface Sensor {
-  id: string;
-  type: SensorType;
-  zone: ZoneType;
-  x: number;
-  y: number;
-}
-
-export interface ZoneShape {
-  zone: ZoneType;
-  rect: Rect;
-}
-
-export interface FloorPlan {
-  storeId: string;
-  width: number;
-  height: number;
-  /** Interior bounds (walls). */
-  interior: Rect;
-  /** Door gap on the street-facing wall. */
-  door: { x: number; w: number };
-  zones: ZoneShape[];
-  sensors: Sensor[];
-}
+export type SensorType = "street-counter" | "zone-sensor" | "checkout-sensor";
 
 export const SENSOR_LABELS: Record<SensorType, string> = {
   "street-counter": "Street counter",
-  "door-counter": "Door counter",
   "zone-sensor": "Zone sensor",
   "checkout-sensor": "Checkout sensor",
 };
 
-const WIDTH = 100;
-const HEIGHT = 74;
-const INTERIOR: Rect = { x: 0, y: 0, w: 100, h: 58 };
-const STREET: Rect = { x: 0, y: 62, w: 100, h: 12 };
+export type Fixture =
+  | {
+      kind: "rack" | "shelf" | "counter" | "till" | "plinth" | "window" | "mirror";
+      x: number;
+      y: number;
+      w: number;
+      h: number;
+    }
+  | { kind: "cubicle"; x: number; y: number; w: number; h: number; open: "left" | "right" }
+  | { kind: "table"; cx: number; cy: number; r: number }
+  | { kind: "barrier"; x1: number; y1: number; x2: number; y2: number };
 
+export interface PlanZone {
+  zone: InStoreZone;
+  polygon: Polygon;
+  /** Top-left corner of the zone's label pill. */
+  labelAt: Point;
+  /** Where flow arrows start and end for this zone. */
+  anchor: Point;
+  /** Label when the full zone name doesn't fit (e.g. "Fitting"). */
+  shortLabel?: string;
+}
+
+interface SensorSpec {
+  type: SensorType;
+  zone: InStoreZone | "street";
+  x: number;
+  y: number;
+  /** Detection radius in metres (drawn as the coverage circle). */
+  rangeM: number;
+}
+
+export interface Sensor extends SensorSpec {
+  id: string;
+}
+
+/** What a store's plan declares. */
+export interface PlanSpec {
+  width: number;
+  depth: number;
+  outline: Polygon;
+  door: { x1: number; x2: number };
+  glass: (readonly [Point, Point])[];
+  columns: Point[];
+  staffAreas: { label: string; polygon: Polygon }[];
+  streetLabel: string;
+  zones: PlanZone[];
+  fixtures: Fixture[];
+  sensors: SensorSpec[];
+}
+
+/** What the UI renders. */
+export interface FloorPlan extends Omit<PlanSpec, "sensors"> {
+  storeId: string;
+  sensors: Sensor[];
+  street: { x: number; y: number; w: number; h: number };
+  /** Point outside the door that flows from the street start at. */
+  streetAnchor: Point;
+  /** SVG viewBox covering the building, street and scale bar. */
+  viewBox: { x: number; y: number; w: number; h: number };
+  /** False while the store still uses the generic template plan. */
+  handmade: boolean;
+}
+
+// --- Template plans (stores not yet hand-designed) -----------------------------
+
+type Rect = { x: number; y: number; w: number; h: number };
 type Template = { zones: Partial<Record<InStoreZone, Rect>>; door: { x: number; w: number } };
 
-/** Flagship-size store with every zone. */
-const LARGE: Template = {
-  zones: {
-    womenswear: { x: 0, y: 0, w: 40, h: 28 },
-    menswear: { x: 40, y: 0, w: 32, h: 28 },
-    kids: { x: 72, y: 0, w: 28, h: 28 },
-    "fitting-rooms": { x: 0, y: 28, w: 22, h: 30 },
-    entrance: { x: 22, y: 28, w: 40, h: 30 },
-    checkout: { x: 62, y: 28, w: 38, h: 30 },
-  },
-  door: { x: 34, w: 16 },
-};
+// Template grid: 100 × 58 units, scaled to the store's real size.
+const TEMPLATE_W = 100;
+const TEMPLATE_D = 58;
 
-/** Mid-size store with every zone; checkout next to the door. */
 const MEDIUM: Template = {
   zones: {
     womenswear: { x: 0, y: 0, w: 46, h: 30 },
@@ -82,7 +104,6 @@ const MEDIUM: Template = {
   door: { x: 44, w: 16 },
 };
 
-/** Compact store without a kids zone. */
 const COMPACT: Template = {
   zones: {
     womenswear: { x: 0, y: 0, w: 56, h: 30 },
@@ -94,66 +115,133 @@ const COMPACT: Template = {
   door: { x: 36, w: 16 },
 };
 
-const STORE_TEMPLATES: Record<string, { template: Template; mirror: boolean }> = {
-  "mad-granvia": { template: LARGE, mirror: false },
-  "bcn-pdg": { template: MEDIUM, mirror: true },
-  "vlc-colon": { template: COMPACT, mirror: false },
-};
+function templateSpec(
+  storeId: string,
+  template: Template,
+  mirror: boolean,
+  width: number,
+  depth: number,
+): PlanSpec {
+  const store = getStore(storeId)!;
+  const sx = width / TEMPLATE_W;
+  const sy = depth / TEMPLATE_D;
+  const mapRect = (r: Rect) => {
+    const x = mirror ? TEMPLATE_W - r.x - r.w : r.x;
+    return { x: x * sx, y: r.y * sy, w: r.w * sx, h: r.h * sy };
+  };
+  const doorX = (mirror ? TEMPLATE_W - template.door.x - template.door.w : template.door.x) * sx;
+  const door = { x1: doorX, x2: doorX + template.door.w * sx };
 
-const mirrorRect = (r: Rect): Rect => ({ ...r, x: WIDTH - r.x - r.w });
+  const zones: PlanZone[] = store.zones.map((zone) => {
+    const r = mapRect(template.zones[zone]!);
+    return {
+      zone,
+      polygon: rectPolygon(r.x, r.y, r.w, r.h),
+      labelAt: [r.x + 0.5, r.y + 0.5],
+      anchor: [r.x + r.w / 2, r.y + r.h / 2 + 1],
+      shortLabel: zone === "fitting-rooms" ? "Fitting" : undefined,
+    };
+  });
 
-const center = (r: Rect) => ({ x: r.x + r.w / 2, y: r.y + r.h / 2 });
-
-function buildPlan(storeId: string): FloorPlan {
-  const store = getStore(storeId);
-  const config = STORE_TEMPLATES[storeId];
-  if (!store || !config) throw new Error(`No floor plan for store: ${storeId}`);
-
-  const { template, mirror } = config;
-  const zones: ZoneShape[] = [{ zone: "street", rect: STREET }];
-  for (const zone of store.zones) {
-    const rect = template.zones[zone];
-    if (!rect) throw new Error(`Template for ${storeId} lacks zone ${zone}`);
-    zones.push({ zone, rect: mirror ? mirrorRect(rect) : rect });
-  }
-  const door = mirror ? { x: WIDTH - template.door.x - template.door.w, w: template.door.w } : template.door;
-
-  // Sensors: street counter outside the door, door counter on the threshold,
-  // one sensor per zone (two in large zones), placed off-centre so labels fit.
-  const sensors: Omit<Sensor, "id">[] = [
-    { type: "street-counter", zone: "street", x: door.x + door.w / 2, y: STREET.y + 4 },
-    { type: "door-counter", zone: "entrance", x: door.x + door.w / 2, y: INTERIOR.h - 3 },
+  const sensors: SensorSpec[] = [
+    { type: "street-counter", zone: "street", x: (door.x1 + door.x2) / 2, y: depth + 3.6, rangeM: 6 },
+    ...zones.map((z): SensorSpec => {
+      const [cx, cy] = z.anchor;
+      return {
+        type: z.zone === "checkout" ? "checkout-sensor" : "zone-sensor",
+        zone: z.zone,
+        x: cx,
+        y: cy,
+        rangeM: 8,
+      };
+    }),
   ];
-  for (const { zone, rect } of zones) {
-    if (zone === "street") continue;
-    const c = center(rect);
-    if (zone === "entrance") {
-      sensors.push({ type: "zone-sensor", zone, x: c.x, y: rect.y + 6 });
-    } else if (zone === "checkout") {
-      sensors.push({ type: "checkout-sensor", zone, x: c.x, y: rect.y + 6 });
-    } else if (rect.w * rect.h > 1000) {
-      sensors.push({ type: "zone-sensor", zone, x: rect.x + rect.w * 0.3, y: rect.y + 6 });
-      sensors.push({ type: "zone-sensor", zone, x: rect.x + rect.w * 0.7, y: rect.y + 6 });
-    } else {
-      sensors.push({ type: "zone-sensor", zone, x: c.x, y: rect.y + 6 });
-    }
-  }
 
   return {
-    storeId,
-    width: WIDTH,
-    height: HEIGHT,
-    interior: INTERIOR,
+    width,
+    depth,
+    outline: rectPolygon(0, 0, width, depth),
     door,
+    glass: [
+      [
+        [0.6, depth],
+        [door.x1 - 0.6, depth],
+      ],
+      [
+        [door.x2 + 0.6, depth],
+        [width - 0.6, depth],
+      ],
+    ],
+    columns: [],
+    staffAreas: [],
+    streetLabel: store.city,
     zones,
-    sensors: sensors.map((s, i) => ({ ...s, id: `${storeId}-S${String(i + 1).padStart(2, "0")}` })),
+    fixtures: [],
+    sensors,
   };
 }
 
-const plans = new Map(STORES.map((s) => [s.id, buildPlan(s.id)]));
+// --- Normalisation -------------------------------------------------------------
+
+const STREET_GAP = 2.3;
+const STREET_DEPTH = 7.4;
+
+function normalise(storeId: string, spec: PlanSpec, handmade: boolean): FloorPlan {
+  const street = { x: -2.5, y: spec.depth + STREET_GAP, w: spec.width + 5, h: STREET_DEPTH };
+  return {
+    ...spec,
+    storeId,
+    handmade,
+    street,
+    streetAnchor: [(spec.door.x1 + spec.door.x2) / 2, street.y + 3.7],
+    sensors: spec.sensors.map((s, i) => ({ ...s, id: `${storeId}-S${String(i + 1).padStart(2, "0")}` })),
+    viewBox: { x: -3, y: -2, w: spec.width + 6, h: spec.depth + STREET_GAP + STREET_DEPTH + 6 },
+  };
+}
+
+const SPECS: Record<string, () => { spec: PlanSpec; handmade: boolean }> = {
+  "mad-granvia": () => ({ spec: MAD_GRANVIA, handmade: true }),
+  "bcn-pdg": () => ({ spec: templateSpec("bcn-pdg", MEDIUM, true, 50, 32), handmade: false }),
+  "vlc-colon": () => ({ spec: templateSpec("vlc-colon", COMPACT, false, 44, 25), handmade: false }),
+};
+
+const plans = new Map(
+  STORES.map((s) => {
+    const make = SPECS[s.id];
+    if (!make) throw new Error(`No floor plan for store: ${s.id}`);
+    const { spec, handmade } = make();
+    return [s.id, normalise(s.id, spec, handmade)];
+  }),
+);
 
 export function getFloorPlan(storeId: string): FloorPlan {
   const plan = plans.get(storeId);
   if (!plan) throw new Error(`Unknown store: ${storeId}`);
   return plan;
 }
+
+/** Points that people dots must avoid: inside a fixture (with a small margin) or a column. */
+export function isBlocked(plan: FloorPlan, [x, y]: Point, margin = 0.45): boolean {
+  for (const f of plan.fixtures) {
+    if (f.kind === "cubicle") continue; // people can be inside a cubicle
+    if (f.kind === "table") {
+      if (Math.hypot(x - f.cx, y - f.cy) < f.r + margin) return true;
+    } else if (f.kind === "barrier") {
+      if (Math.abs(y - f.y1) < margin && x > f.x1 - margin && x < f.x2 + margin) return true;
+    } else if (x > f.x - margin && x < f.x + f.w + margin && y > f.y - margin && y < f.y + f.h + margin) {
+      return true;
+    }
+  }
+  return plan.columns.some(([cx, cy]) => Math.hypot(x - cx, y - cy) < 0.9);
+}
+
+/** Total public floor area (zones) and staff area, for sanity checks. */
+export function planAreas(plan: FloorPlan) {
+  return {
+    outline: polygonArea(plan.outline),
+    zones: plan.zones.reduce((s, z) => s + polygonArea(z.polygon), 0),
+    staff: plan.staffAreas.reduce((s, a) => s + polygonArea(a.polygon), 0),
+  };
+}
+
+export { inPolygon };

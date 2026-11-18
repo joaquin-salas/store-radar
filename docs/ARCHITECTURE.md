@@ -99,6 +99,31 @@ The home page is the live view of one store (`/stores/[id]`), built for a store 
 - **Loyalty members inside**: registered customers present now, gold and silver first, for clienteling.
 - Occupancy is computed from each simulated visit's path and dwell times (`lib/domain/occupancy.ts`); full simulated days are kept in a small LRU cache so the 5-second refresh stays cheap.
 
+### Floor plans
+
+Each store has a floor plan in metres (`lib/domain/layout.ts`, hand-made plans in
+`lib/domain/plans/`): building outline, glass shopfront and door, columns,
+staff-only areas (hatched, never tracked), zone polygons with label and flow
+anchors, fixtures (racks, tables, shelves, fitting cubicles, counters, tills,
+plinths, display windows, queue barriers) and sensors with a detection range.
+Madrid Gran Vía is hand-designed (60 × 40 m corner flagship); Barcelona and
+Valencia still use a generic template, normalised into the same shape.
+
+The plan is rendered as SVG with toggleable layers (remembered per browser):
+
+- **Occupancy** (default on): zones filled by % of capacity; amber dashed border
+  at ≥85%, red at full. Fitting-room capacity is 2 people per cubicle.
+- **People** (default on): one dot per person, placed inside the zone polygon
+  while avoiding fixtures and columns (people can be inside cubicles);
+  re-shuffled on every refresh.
+- **Sensors**: nodes with their coverage circle, clipped to the building and street.
+- **Flows**: zone-to-zone movements in the last hour, counted from real visit
+  paths (`lib/domain/flows.ts`); arrow width scales with the count.
+
+Zones, sensors and flows have hover/focus cards. Tests check that zones plus
+staff areas tile each building exactly and that labels, fixtures and sensors
+sit inside it.
+
 ## Client data flow
 
 - TanStack Query hooks in `lib/queries.ts`, with a query-key factory.

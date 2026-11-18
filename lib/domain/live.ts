@@ -10,6 +10,7 @@ import { getDaySummary, getSimulatedDay, openingHours } from "./generator";
 import { type Sensor, type SensorType, getFloorPlan } from "./layout";
 import { zoneStats } from "./metrics";
 import { emptyZoneCounts, streetBetween, whoIsInside } from "./occupancy";
+import { zoneFlows } from "./flows";
 import { createRng } from "./random";
 import { type LocalDateTime, localNow, pad2, secondsOfDay } from "./time";
 import { typicalOccupancyAt, weekdayName } from "./typical";
@@ -21,6 +22,8 @@ export { occupancyAt, streetBetween } from "./occupancy";
 export const RECENT_WINDOW_SEC = 15 * 60;
 /** Occupancy (share of capacity) that raises a warning / critical alert. */
 export const ALERT_THRESHOLDS = { warning: 0.85, critical: 1 } as const;
+/** Window for flow arrows on the floor plan. */
+export const FLOW_WINDOW_SEC = 60 * 60;
 /** Sparkline window and resolution. */
 export const SERIES_WINDOW_SEC = 90 * 60;
 export const SERIES_STEP_SEC = 5 * 60;
@@ -208,7 +211,6 @@ export function getLiveSnapshot(storeId: string, now: LocalDateTime = localNow()
   };
   const detectionsFor: Record<SensorType, (s: Sensor) => number> = {
     "street-counter": () => recentStreet,
-    "door-counter": () => recentEntrants,
     "zone-sensor": share,
     "checkout-sensor": share,
   };
@@ -236,6 +238,8 @@ export function getLiveSnapshot(storeId: string, now: LocalDateTime = localNow()
     zones,
     alerts,
     registered,
+    /** Zone-to-zone movements in the last hour, largest first. */
+    flows: zoneFlows(visits, Math.max(0, nowSec - FLOW_WINDOW_SEC), nowSec + 1),
     series,
     sensors,
   };

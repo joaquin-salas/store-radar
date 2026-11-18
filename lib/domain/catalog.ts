@@ -53,7 +53,7 @@ export const STORES: readonly Store[] = [
     capacity: 100,
     returningRate: 0.28,
     devicePool: 40_000,
-    zoneCapacity: { entrance: 15, womenswear: 40, menswear: 24, kids: 14, "fitting-rooms": 24, checkout: 12 },
+    zoneCapacity: { entrance: 15, womenswear: 40, menswear: 24, kids: 14, "fitting-rooms": 20, checkout: 12 },
   },
   {
     id: "bcn-pdg",

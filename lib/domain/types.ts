@@ -44,7 +44,7 @@ export interface Store {
   registeredRate: number;
   /** Maximum people allowed inside at once (safety/comfort limit). */
   capacity: number;
-  /** Comfortable maximum per zone; fitting rooms = number of cubicles. */
+  /** Comfortable maximum per zone; fitting rooms = 2 people per cubicle (customer + companion). */
   zoneCapacity: Record<InStoreZone, number>;
   /** Typical share of anonymous visitors whose device was seen before (locals vs. tourists). */
   returningRate: number;
