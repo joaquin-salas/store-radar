@@ -1,6 +1,6 @@
 # Store Radar
 
-Retail analytics dashboard for **Lumen**, a fictional fashion chain with six
+Retail analytics dashboard for **Lumen**, a fictional fashion chain with three
 stores across Spain. Sensors in each store count street passers-by and track
 anonymous visitors through zones (entrance, womenswear, menswear, kids, fitting
 rooms, checkout). Some visitors are identified as registered loyalty

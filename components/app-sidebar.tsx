@@ -37,7 +37,9 @@ export function AppSidebar() {
               </span>
               <span className="grid flex-1 text-left leading-tight">
                 <span className="font-semibold">Store Radar</span>
-                <span className="text-muted-foreground text-xs">{CHAIN.name} · 6 stores</span>
+                <span className="text-muted-foreground text-xs">
+                  {CHAIN.name} · {STORES.length} stores
+                </span>
               </span>
             </SidebarMenuButton>
           </SidebarMenuItem>

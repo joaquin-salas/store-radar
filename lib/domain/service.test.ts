@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { STORES } from "./catalog";
+import { CUSTOMER_COUNT } from "./customers";
 import { rangeSchema } from "./schemas";
 import {
   compareStores,
@@ -106,10 +107,10 @@ describe("tables", () => {
   it("pages, searches and filters customers", () => {
     const base = { store: "all", tier: "all", sort: "visits", dir: "desc", page: 0, pageSize: 10 } as const;
     const top = getCustomersPage(base, NOW);
-    expect(top.total).toBe(12_000);
+    expect(top.total).toBe(CUSTOMER_COUNT);
     expect(top.rows[0].visits).toBeGreaterThanOrEqual(top.rows[9].visits);
-    const gold = getCustomersPage({ ...base, tier: "gold", store: "bio-ercilla" }, NOW);
-    expect(gold.rows.every((r) => r.tier === "gold" && r.homeStoreId === "bio-ercilla")).toBe(true);
+    const gold = getCustomersPage({ ...base, tier: "gold", store: "vlc-colon" }, NOW);
+    expect(gold.rows.every((r) => r.tier === "gold" && r.homeStoreId === "vlc-colon")).toBe(true);
     const search = getCustomersPage({ ...base, q: "C00042" }, NOW);
     expect(search.rows.map((r) => r.id)).toEqual(["C00042"]);
   });

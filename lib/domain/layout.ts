@@ -96,11 +96,8 @@ const COMPACT: Template = {
 
 const STORE_TEMPLATES: Record<string, { template: Template; mirror: boolean }> = {
   "mad-granvia": { template: LARGE, mirror: false },
-  "mad-serrano": { template: MEDIUM, mirror: false },
-  "bcn-pdg": { template: LARGE, mirror: true },
+  "bcn-pdg": { template: MEDIUM, mirror: true },
   "vlc-colon": { template: COMPACT, mirror: false },
-  "svq-sierpes": { template: COMPACT, mirror: true },
-  "bio-ercilla": { template: MEDIUM, mirror: true },
 };
 
 const mirrorRect = (r: Rect): Rect => ({ ...r, x: WIDTH - r.x - r.w });

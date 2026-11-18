@@ -4,7 +4,7 @@ import { addDays } from "./time";
 import type { Customer, CustomerTier } from "./types";
 
 /** Size of the fictional loyalty programme. */
-export const CUSTOMER_COUNT = 12_000;
+export const CUSTOMER_COUNT = 6_000;
 
 const FIRST_NAMES = [
   "Lucía",

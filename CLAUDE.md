@@ -2,7 +2,7 @@
 
 # Store Radar — guide for Claude Code
 
-Retail analytics dashboard for a **fictional** fashion chain ("Lumen", 6 stores
+Retail analytics dashboard for a **fictional** fashion chain ("Lumen", 3 stores
 in Spain). Take-home project. All data is simulated — never add real company
 names, real customer data or code from elsewhere.
 

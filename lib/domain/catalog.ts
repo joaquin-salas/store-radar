@@ -3,7 +3,7 @@ import type { InStoreZone, ProductZone, Store, ZoneType } from "./types";
 /** Fictional fashion retail chain used for the simulation. */
 export const CHAIN = {
   name: "Lumen",
-  description: "Fictional fashion retailer with six stores across Spain",
+  description: "Fictional fashion retailer with three stores across Spain",
 } as const;
 
 export const ZONE_LABELS: Record<ZoneType, string> = {
@@ -52,22 +52,10 @@ export const STORES: readonly Store[] = [
     registeredRate: 0.12,
   },
   {
-    id: "mad-serrano",
-    name: "Madrid Serrano",
-    city: "Madrid",
-    sizeM2: 1300,
-    zones: ALL_ZONES,
-    hours: WEEKDAY,
-    sundayHours: { open: 12, close: 20 },
-    streetBase: 820,
-    captureBase: 0.13,
-    registeredRate: 0.17,
-  },
-  {
     id: "bcn-pdg",
     name: "Barcelona Passeig de Gràcia",
     city: "Barcelona",
-    sizeM2: 2000,
+    sizeM2: 1600,
     zones: ALL_ZONES,
     hours: { open: 10, close: 21 },
     sundayHours: null,
@@ -86,30 +74,6 @@ export const STORES: readonly Store[] = [
     streetBase: 700,
     captureBase: 0.14,
     registeredRate: 0.15,
-  },
-  {
-    id: "svq-sierpes",
-    name: "Sevilla Sierpes",
-    city: "Sevilla",
-    sizeM2: 900,
-    zones: NO_KIDS,
-    hours: { open: 10, close: 21 },
-    sundayHours: null,
-    streetBase: 620,
-    captureBase: 0.15,
-    registeredRate: 0.14,
-  },
-  {
-    id: "bio-ercilla",
-    name: "Bilbao Ercilla",
-    city: "Bilbao",
-    sizeM2: 1000,
-    zones: ALL_ZONES,
-    hours: { open: 10, close: 21 },
-    sundayHours: null,
-    streetBase: 560,
-    captureBase: 0.135,
-    registeredRate: 0.19,
   },
 ];
 

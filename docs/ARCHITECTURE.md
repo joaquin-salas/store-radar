@@ -35,8 +35,8 @@ Next.js or React, which keeps it unit-testable and reusable by the AI tools.
 | File           | Responsibility                                                        |
 | -------------- | --------------------------------------------------------------------- |
 | `types.ts`     | Store, Zone, Visit, Customer, hourly/daily aggregates                 |
-| `catalog.ts`   | The fictional chain: 6 stores, zones, opening hours, behaviour params |
-| `customers.ts` | 12,000 fictional loyalty members (seeded)                             |
+| `catalog.ts`   | The fictional chain: 3 stores, zones, opening hours, behaviour params |
+| `customers.ts` | 6,000 fictional loyalty members (seeded)                              |
 | `random.ts`    | Seeded PRNG (cyrb53 hash + mulberry32)                                |
 | `time.ts`      | Europe/Madrid local time, date arithmetic on `YYYY-MM-DD` strings     |
 | `generator.ts` | Simulates a store-day, summarises it, caches past days                |
@@ -84,7 +84,7 @@ There is no database. All data is generated deterministically:
    "today" use yesterday _up to the same time_, not a full day.
 5. **Caching.** Past days never change, so their summaries are memoised per
    server instance (bounded map). A cold 30-day chain query (current + previous
-   period, 360 store-days) takes ~0.5 s; warm, ~10 ms.
+   period, 180 store-days) takes ~0.25 s; warm, ~5 ms.
 
 ## Client data flow
 
