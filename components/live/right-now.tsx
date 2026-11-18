@@ -70,6 +70,8 @@ export function RightNow({ live }: { live: LiveSnapshot | undefined }) {
           </ul>
         </div>
 
+        <NewVsReturning inside={live.peopleInside} returning={live.returningInside} />
+
         <Separator />
 
         <dl className="grid grid-cols-2 gap-3 text-sm">
@@ -90,6 +92,47 @@ export function RightNow({ live }: { live: LiveSnapshot | undefined }) {
         </dl>
       </CardContent>
     </Card>
+  );
+}
+
+/** Split bar: of the people inside, how many are new vs. returning visitors. */
+function NewVsReturning({ inside, returning }: { inside: number; returning: number }) {
+  const fresh = inside - returning;
+  const returningShare = inside > 0 ? returning / inside : 0;
+  return (
+    <div className="flex flex-col gap-1.5">
+      <p className="text-muted-foreground text-xs">Inside now · new vs. returning</p>
+      {inside === 0 ? (
+        <p className="text-muted-foreground text-xs">Nobody inside.</p>
+      ) : (
+        <>
+          <div
+            className="flex h-2 gap-0.5 overflow-hidden rounded-full"
+            role="img"
+            aria-label={`${fresh} new and ${returning} returning visitors inside`}
+          >
+            <span
+              className="bg-chart-1 h-full rounded-l-full"
+              style={{ width: `${(1 - returningShare) * 100}%` }}
+            />
+            <span
+              className="bg-chart-2 h-full rounded-r-full"
+              style={{ width: `${returningShare * 100}%` }}
+            />
+          </div>
+          <div className="flex justify-between text-xs tabular-nums">
+            <span className="flex items-center gap-1.5">
+              <span className="bg-chart-1 size-2 rounded-[2px]" aria-hidden />
+              {fresh} new
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="bg-chart-2 size-2 rounded-[2px]" aria-hidden />
+              {returning} returning · {formatPercent(returningShare)}
+            </span>
+          </div>
+        </>
+      )}
+    </div>
   );
 }
 

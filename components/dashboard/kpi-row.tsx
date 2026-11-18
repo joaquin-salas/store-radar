@@ -4,7 +4,7 @@ import { ArrowDownRight, ArrowUpRight } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { Kpis } from "@/lib/domain/metrics";
-import { formatDuration, formatHour, formatInt, formatPercent, relativeChange } from "@/lib/format";
+import { formatDuration, formatInt, formatPercent, relativeChange } from "@/lib/format";
 import { type ScopeParams, useOverview } from "@/lib/queries";
 
 interface KpiDef {
@@ -46,7 +46,12 @@ const KPIS: KpiDef[] = [
     value: (k) => formatPercent(k.registeredShare),
     compare: (k) => k.registeredShare,
   },
-  { label: "Peak hour", hint: "Busiest hour so far", value: (k) => formatHour(k.peakHour) },
+  {
+    label: "Returning",
+    hint: "Visitors seen on an earlier day",
+    value: (k) => formatPercent(k.returningShare),
+    compare: (k) => k.returningShare,
+  },
 ];
 
 /** KPI cards with a comparison; pass `current`/`previous` or nothing while loading. */
