@@ -3,7 +3,7 @@
 import { HourlyVisitorsChart } from "@/components/dashboard/hourly-visitors-chart";
 import { KpiRow } from "@/components/dashboard/kpi-row";
 import { ZoneChart } from "@/components/dashboard/zone-chart";
-import { FloorPlan, HeatLegend } from "@/components/live/floor-plan";
+import { FloorPlan, LayerToggles, PlanLegend, usePlanLayers } from "@/components/live/floor-plan";
 import { PaceCard } from "@/components/live/pace-card";
 import { RegisteredInside } from "@/components/live/registered-inside";
 import { RightNow } from "@/components/live/right-now";
@@ -18,6 +18,7 @@ export function LiveView({ storeId, storeName, plan }: { storeId: string; storeN
   const { data: live, isError } = useLiveSnapshot(storeId);
   const { data: pace } = usePace(storeId);
   const weekday = pace?.weekday ?? live?.weekday;
+  const { layers, toggle } = usePlanLayers();
 
   return (
     <div className="flex flex-col gap-4">
@@ -44,17 +45,22 @@ export function LiveView({ storeId, storeName, plan }: { storeId: string; storeN
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_22rem]">
         <Card>
-          <CardHeader>
-            <CardTitle>{storeName}</CardTitle>
-            <CardDescription>Floor plan · zones coloured by how full they are right now</CardDescription>
+          <CardHeader className="flex flex-wrap items-start justify-between gap-3">
+            <div className="flex flex-col gap-1">
+              <CardTitle>{storeName}</CardTitle>
+              <CardDescription>
+                Floor plan · {plan.width} × {plan.depth} m · zones coloured by how full they are right now
+              </CardDescription>
+            </div>
+            <LayerToggles layers={layers} onToggle={toggle} />
           </CardHeader>
           <CardContent className="flex flex-col gap-3">
             {isError ? (
               <p className="text-destructive text-sm">Couldn&apos;t load live data.</p>
             ) : (
-              <FloorPlan plan={plan} live={live} />
+              <FloorPlan plan={plan} live={live} layers={layers} />
             )}
-            <HeatLegend />
+            <PlanLegend plan={plan} layers={layers} />
           </CardContent>
         </Card>
         <RightNow live={live} />

@@ -97,6 +97,19 @@
   --heat-4: #4361ee;
   --heat-5: #22339a;
   --heat-ink-high: #ffffff;
+  /* Floor plan (SVG) */
+  --plan-street: #ebeaf3;
+  --plan-wall: #14121f;
+  --plan-glass: #4361ee;
+  --plan-staff: #e9e8f1;
+  --plan-zone-neutral: #f1f0f7;
+  --plan-fixture: #ffffff;
+  --plan-fixture-stroke: rgb(20 18 31 / 0.32);
+  --plan-fixture-on-high: rgb(255 255 255 / 0.2);
+  --plan-fixture-stroke-on-high: rgb(255 255 255 / 0.6);
+  --plan-person: rgb(20 18 31 / 0.7);
+  --plan-person-on-high: rgb(255 255 255 / 0.9);
+  --plan-pill: rgb(255 255 255 / 0.92);
   --status-good: #0ca30c;
   --status-warning: #fab219;
   --status-critical: #d03b3b;
@@ -145,6 +158,18 @@
   --heat-4: #5b7cfa;
   --heat-5: #9aaef7;
   --heat-ink-high: #0f0d1a;
+  --plan-street: #17142a;
+  --plan-wall: #cfd0e6;
+  --plan-glass: #5b7cfa;
+  --plan-staff: #1b1830;
+  --plan-zone-neutral: #1b1932;
+  --plan-fixture: rgb(255 255 255 / 0.07);
+  --plan-fixture-stroke: rgb(255 255 255 / 0.32);
+  --plan-fixture-on-high: rgb(15 13 26 / 0.18);
+  --plan-fixture-stroke-on-high: rgb(15 13 26 / 0.55);
+  --plan-person: rgb(241 240 247 / 0.85);
+  --plan-person-on-high: rgb(15 13 26 / 0.85);
+  --plan-pill: rgb(23 20 42 / 0.92);
   --status-good: #0ca30c;
   --status-warning: #fab219;
   --status-critical: #d03b3b;
