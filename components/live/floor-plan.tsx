@@ -2,7 +2,7 @@
 
 import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { ZONE_LABELS } from "@/lib/domain/catalog";
-import { type Point, inPolygon, polygonBounds, toSvgPoints } from "@/lib/domain/geometry";
+import { type Point, distanceToEdges, inPolygon, polygonBounds, toSvgPoints } from "@/lib/domain/geometry";
 import {
   type Fixture,
   type FloorPlan as Plan,
@@ -151,7 +151,8 @@ export function FloorPlan({
           p = [b.minX + rng.next() * (b.maxX - b.minX), b.minY + rng.next() * (b.maxY - b.minY)];
           const underLabel =
             p[0] < z.labelAt[0] + 12 && p[1] > z.labelAt[1] - 0.4 && p[1] < z.labelAt[1] + 2.6;
-          if (inPolygon(p, z.polygon) && !isBlocked(plan, p) && !underLabel) break;
+          const nearWall = distanceToEdges(p, plan.outline) < 0.5;
+          if (inPolygon(p, z.polygon) && !isBlocked(plan, p) && !underLabel && !nearWall) break;
         }
         out.push({ key: `${z.zone}-${i}`, x: p[0], y: p[1] });
       }
@@ -329,17 +330,29 @@ export function FloorPlan({
           {plan.fixtures.map((f, i) => (
             <FixtureShape key={i} f={f} high={onHigh(fixtureCenter(f))} />
           ))}
-          {plan.columns.map(([x, y], i) => (
-            <rect
-              key={`col-${i}`}
-              x={x - 0.45}
-              y={y - 0.45}
-              width={0.9}
-              height={0.9}
-              fill="var(--plan-wall)"
-              opacity={0.85}
-            />
-          ))}
+          {plan.columns.map(([x, y], i) =>
+            plan.columnStyle === "round" ? (
+              <circle
+                key={`col-${i}`}
+                cx={x}
+                cy={y}
+                r={0.55}
+                fill="var(--plan-fixture)"
+                stroke="var(--plan-wall)"
+                strokeWidth={0.22}
+              />
+            ) : (
+              <rect
+                key={`col-${i}`}
+                x={x - 0.45}
+                y={y - 0.45}
+                width={0.9}
+                height={0.9}
+                fill="var(--plan-wall)"
+                opacity={0.85}
+              />
+            ),
+          )}
         </g>
 
         {/* Walls, shopfront glass and door swings */}
@@ -861,7 +874,7 @@ export function PlanLegend({ plan, layers }: { plan: Plan; layers: Record<PlanLa
             }}
             aria-hidden
           />
-          Staff only · not tracked
+          Not public · not tracked
         </span>
       )}
     </div>

@@ -44,3 +44,18 @@ export const rectPolygon = (x: number, y: number, w: number, h: number): Point[]
 ];
 
 export const toSvgPoints = (polygon: Polygon) => polygon.map((p) => `${p[0]},${p[1]}`).join(" ");
+
+/** Shortest distance from a point to the polygon's edges. */
+export function distanceToEdges([x, y]: Point, polygon: Polygon): number {
+  let best = Infinity;
+  for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+    const [ax, ay] = polygon[j];
+    const [bx, by] = polygon[i];
+    const dx = bx - ax;
+    const dy = by - ay;
+    const len2 = dx * dx + dy * dy;
+    const t = len2 === 0 ? 0 : Math.max(0, Math.min(1, ((x - ax) * dx + (y - ay) * dy) / len2));
+    best = Math.min(best, Math.hypot(x - (ax + t * dx), y - (ay + t * dy)));
+  }
+  return best;
+}
