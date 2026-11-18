@@ -1,10 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import { Suspense } from "react";
-import { AppSidebar } from "@/components/app-sidebar";
-import { Separator } from "@/components/ui/separator";
-import { ThemeToggle } from "@/components/theme-toggle";
-import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { AppShell } from "@/components/shell/app-shell";
 import { Providers } from "./providers";
 import "./globals.css";
 
@@ -32,25 +28,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
       suppressHydrationWarning
     >
-      <body className="min-h-full">
+      <body className="bg-background h-full overflow-hidden">
         <Providers>
-          <SidebarProvider>
-            {/* The sidebar reads the pathname (unknown for dynamic routes at build time). */}
-            <Suspense>
-              <AppSidebar />
-            </Suspense>
-            <SidebarInset>
-              <header className="bg-background/80 sticky top-0 z-20 flex h-12 shrink-0 items-center gap-2 border-b px-4 backdrop-blur">
-                <SidebarTrigger className="-ml-1" />
-                <Separator orientation="vertical" className="mr-1 h-4" />
-                <span className="text-sm font-medium">Store Radar</span>
-                <div className="ml-auto">
-                  <ThemeToggle />
-                </div>
-              </header>
-              <div className="mx-auto w-full max-w-7xl flex-1 p-4 sm:p-6">{children}</div>
-            </SidebarInset>
-          </SidebarProvider>
+          <AppShell>{children}</AppShell>
         </Providers>
       </body>
     </html>

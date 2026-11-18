@@ -89,9 +89,35 @@ There is no database. All data is generated deterministically:
    server instance (bounded map). A cold 30-day chain query (current + previous
    period, 180 store-days) takes ~0.25 s; warm, ~5 ms.
 
+## Navigation and layout
+
+There is no sidebar. The header holds the brand, a **store picker** and the
+**view tabs** (Live, Analytics, Visits, Customers, Flows); below it, the AI
+assistant docks on the left and the page fills the rest.
+
+- **URLs are `/<scope>/<view>`**: `/mad-granvia/live`, `/all/analytics`. The
+  scope is a store id or `all`. Views and the scopes they accept are defined
+  once in `lib/nav.ts`; the header, pages and redirects all read it.
+- **Switching** store keeps the view; switching view keeps the store. Views
+  that need one store (Live, Visits) show "All stores" disabled with a hint, and
+  opening one from "All stores" uses the last single store visited.
+- **Redirects** (`next.config.ts`): `/` → `/mad-granvia/live`, `/<scope>` →
+  `/<scope>/live`, `/all/<single-store view>` → the flagship store, and the old
+  `/stores/<id>` URLs.
+- Views not built yet are disabled tabs marked "coming soon".
+- **Assistant panel** (`components/assistant/`): lives in the root layout, so
+  it keeps its state across navigation. On desktop (≥1024 px) it is a resizable
+  panel (react-resizable-panels; open state and width remembered per browser);
+  on smaller screens it opens as a sheet. Ctrl/⌘ + I toggles it. It knows the
+  current store and view. Until the AI is connected it shows an empty state
+  with example questions.
+- **Pages size to their container, not the window.** The page area is a CSS
+  container, so page grids use container queries (`@3xl:`, `@4xl:`…) and adapt
+  when the assistant is open. Only the header uses window breakpoints.
+
 ## Live view
 
-The home page is the live view of one store (`/stores/[id]`), built for a store manager deciding what to do now:
+The home page is the live view of one store (`/[store]/live`), built for a store manager deciding what to do now:
 
 - **Occupancy vs. capacity**: each store and zone has a capacity (fitting rooms = cubicles). The floor plan is coloured by % of capacity; zones at ≥85% get a warning and at ≥100% a critical alert (status colour + icon + text).
 - **Typical day**: the average of the same weekday over the previous 4 weeks, at the same time of day. KPIs, people inside and the hourly chart compare against it, which is fairer than "vs. yesterday".

@@ -7,7 +7,6 @@ import { FloorPlan, LayerToggles, PlanLegend, usePlanLayers } from "@/components
 import { PaceCard } from "@/components/live/pace-card";
 import { RegisteredInside } from "@/components/live/registered-inside";
 import { RightNow } from "@/components/live/right-now";
-import { StoreSwitcher } from "@/components/store-switcher";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import type { FloorPlan as Plan } from "@/lib/domain/layout";
@@ -23,7 +22,6 @@ export function LiveView({ storeId, storeName, plan }: { storeId: string; storeN
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center gap-3">
-        <StoreSwitcher storeId={storeId} />
         <span className="text-muted-foreground text-sm tabular-nums">
           {weekday ?? "Today"}
           {live ? ` · ${pad2(live.asOf.hour)}:${pad2(live.asOf.minute)}` : ""} (store time)
@@ -43,7 +41,7 @@ export function LiveView({ storeId, storeName, plan }: { storeId: string; storeN
         )}
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_22rem]">
+      <div className="grid gap-4 @4xl:grid-cols-[minmax(0,1fr)_22rem]">
         <Card>
           <CardHeader className="flex flex-wrap items-start justify-between gap-3">
             <div className="flex flex-col gap-1">
@@ -76,12 +74,12 @@ export function LiveView({ storeId, storeName, plan }: { storeId: string; storeN
         <KpiRow current={pace?.kpis} previous={pace?.typicalKpis} comparisonLabel="vs. typical" />
       </section>
 
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+      <div className="grid gap-4 @3xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
         <HourlyVisitorsChart pace={pace} />
         <PaceCard pace={pace} />
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="grid gap-4 @3xl:grid-cols-2">
         <RegisteredInside live={live} />
         <ZoneChart params={{ store: storeId, preset: "today" }} />
       </div>

@@ -65,7 +65,7 @@ export function KpiRow({
   comparisonLabel: string;
 }) {
   return (
-    <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
+    <div className="grid grid-cols-2 gap-3 @xl:grid-cols-3 @5xl:grid-cols-6">
       {KPIS.map((kpi) =>
         !current || !previous ? (
           <Skeleton key={kpi.label} className="h-[104px] rounded-xl" />

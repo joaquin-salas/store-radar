@@ -21,6 +21,10 @@ Read `docs/ARCHITECTURE.md` before structural changes.
 | `lib/domain/service.ts`, `schemas.ts` | Query functions + Zod inputs shared by API and (future) AI tools                            |
 | `app/api/`                            | Thin route handlers over the domain                                                         |
 | `lib/queries.ts`                      | TanStack Query hooks (response types inferred from the domain)                              |
+| `lib/nav.ts`                          | Views, store scopes and `/<scope>/<view>` URL helpers (header, pages, redirects)            |
+| `app/[scope]/<view>/`                 | One folder per view, e.g. `app/[scope]/live/page.tsx`                                       |
+| `components/shell/`                   | App frame: header (store picker, view tabs), resizable workspace                            |
+| `components/assistant/`               | Assistant panel (docked on desktop, sheet on mobile) and its open state                     |
 | `components/live/`                    | Live view: floor plan, right-now panel, pace, loyalty members                               |
 | `app/globals.css`                     | Theme tokens (light on `:root`, dark on `.dark`)                                            |
 
@@ -65,7 +69,10 @@ Read `docs/ARCHITECTURE.md` before structural changes.
   light and dark. If you change them, re-validate the whole set.
 - Status colours (good / warning / critical) mean status only and always come
   with an icon and text. Brand pink (`--highlight`) never means "bad".
-- Check UI changes in **light and dark**, at **desktop and mobile** width.
+- Check UI changes in **light and dark**, at **desktop and mobile** width, and
+  with the assistant panel **open and closed**.
+- Page layouts use **container queries** (`@3xl:grid-cols-2`), not window
+  breakpoints (`lg:`), because the assistant panel narrows the page.
 
 ## Dev server gotchas (Windows)
 
