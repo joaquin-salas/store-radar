@@ -283,7 +283,6 @@ export function FloorPlan({
           const zl = zoneLive.get(z.zone);
           const fill = zl?.fill ?? 0;
           const alert = layers.occupancy && fill >= WARNING_AT ? (fill >= 1 ? "critical" : "warning") : null;
-          const active = hover?.kind === "zone" && hover.zone.zone === z.zone;
           return (
             <g
               key={z.zone}
@@ -295,8 +294,8 @@ export function FloorPlan({
               <polygon
                 points={toSvgPoints(z.polygon)}
                 fill={layers.occupancy ? `var(--heat-${stepOf(z)})` : "var(--plan-zone-neutral)"}
-                stroke={active ? "var(--foreground)" : "var(--background)"}
-                strokeWidth={active ? 0.3 : 0.18}
+                stroke="var(--background)"
+                strokeWidth={0.18}
                 className="transition-[fill] duration-700"
               />
               {alert && (
@@ -452,6 +451,19 @@ export function FloorPlan({
               />
             </g>
           ))}
+
+        {/* Hovered/focused zone outline, drawn after zones, fixtures and walls so no
+            neighbouring zone paints over its shared edges. */}
+        {hover?.kind === "zone" && (
+          <polygon
+            points={toSvgPoints(hover.zone.polygon)}
+            fill="none"
+            stroke="var(--foreground)"
+            strokeWidth={0.35}
+            strokeLinejoin="round"
+            pointerEvents="none"
+          />
+        )}
 
         {/* Zone labels (always on top) */}
         <g pointerEvents="none">
