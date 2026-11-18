@@ -3,6 +3,8 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   cacheComponents: true,
   partialPrefetching: true,
+  // Don't let `next dev` generate AGENTS.md: its guidance lives in CLAUDE.md.
+  agentRules: false,
   turbopack: {
     rules: {
       "*.css": {
