@@ -98,6 +98,10 @@ const HEAT_STEPS = 6;
 const MAX_DOTS_PER_ZONE = 60;
 const MAX_FLOWS = 8;
 const WARNING_AT = 0.85;
+/** Display scale shared by all stores (≈ 900 px for the 60 m flagship). */
+const PX_PER_METRE = 14;
+/** Zone label size in metres: a bit smaller in small stores so labels fit their zones. */
+const labelSize = (plan: Plan) => Math.min(1.3, Math.max(0.95, plan.width / 40));
 
 /** Share of capacity in 20% buckets: 0 = empty … 5 = over 80%. */
 const heatStep = (fill: number) =>
@@ -176,7 +180,8 @@ export function FloorPlan({
         ...f,
         d: `M${x1} ${y1} Q${cx} ${cy} ${x2} ${y2}`,
         mid: [(x1 + 2 * cx + x2) / 4, (y1 + 2 * cy + y2) / 4] as Point,
-        width: 0.25 + (f.count / max) * 1.1,
+        // Thinner arrows in smaller stores so they don't swamp the plan.
+        width: (0.25 + (f.count / max) * 1.1) * Math.min(1, Math.max(0.6, plan.width / 50)),
       };
     });
   }, [live, plan]);
@@ -203,7 +208,9 @@ export function FloorPlan({
     <div className="relative">
       <svg
         viewBox={`${vb.x} ${vb.y} ${vb.w} ${vb.h}`}
-        className="mx-auto block h-auto w-full max-w-[900px] select-none"
+        className="mx-auto block h-auto w-full select-none"
+        // Same real-world scale for every store, so a smaller store looks smaller.
+        style={{ maxWidth: `${vb.w * PX_PER_METRE}px` }}
         role="img"
         aria-label="Store floor plan with live occupancy"
         onMouseLeave={() => setHover(null)}
@@ -314,9 +321,9 @@ export function FloorPlan({
             <g key={a.label} pointerEvents="none">
               <polygon points={toSvgPoints(a.polygon)} fill={`url(#${uid}-hatch)`} />
               <text
-                x={b.minX + 1}
+                x={b.minX + 0.5}
                 y={b.minY + (b.maxY - b.minY) / 2 + 0.4}
-                fontSize={1.25}
+                fontSize={Math.min(1.25, (b.maxX - b.minX - 1) / (a.label.length * 0.62))}
                 fill="var(--muted-foreground)"
               >
                 {a.label}
@@ -457,6 +464,7 @@ export function FloorPlan({
                 name={z.shortLabel ?? zoneName(z)}
                 count={zl ? `${zl.occupancy}/${zl.capacity}` : "–"}
                 fill={layers.occupancy ? (zl?.fill ?? 0) : 0}
+                size={labelSize(plan)}
               />
             );
           })}
@@ -612,7 +620,15 @@ function FixtureShape({ f, high }: { f: Fixture; high: boolean }) {
         </g>
       );
     case "cubicle": {
-      const x = f.open === "right" ? f.x + f.w : f.x;
+      // Curtain along the open side, inset slightly from the corners.
+      const [x1, y1, x2, y2] =
+        f.open === "left"
+          ? [f.x, f.y + 0.2, f.x, f.y + f.h - 0.2]
+          : f.open === "right"
+            ? [f.x + f.w, f.y + 0.2, f.x + f.w, f.y + f.h - 0.2]
+            : f.open === "top"
+              ? [f.x + 0.15, f.y, f.x + f.w - 0.15, f.y]
+              : [f.x + 0.15, f.y + f.h, f.x + f.w - 0.15, f.y + f.h];
       return (
         <g>
           <rect
@@ -625,12 +641,11 @@ function FixtureShape({ f, high }: { f: Fixture; high: boolean }) {
             stroke={stroke}
             strokeWidth={0.12}
           />
-          {/* Curtain on the open side */}
           <line
-            x1={x}
-            y1={f.y + 0.2}
-            x2={x}
-            y2={f.y + f.h - 0.2}
+            x1={x1}
+            y1={y1}
+            x2={x2}
+            y2={y2}
             stroke={high ? "var(--plan-person-on-high)" : "var(--plan-glass)"}
             strokeWidth={0.22}
             strokeDasharray="0.3 0.2"
@@ -660,17 +675,31 @@ function FixtureShape({ f, high }: { f: Fixture; high: boolean }) {
 }
 
 /** Label pill sized to its text (re-measured once web fonts have loaded). */
-function ZoneLabel({ at, name, count, fill }: { at: Point; name: string; count: string; fill: number }) {
+function ZoneLabel({
+  at,
+  name,
+  count,
+  fill,
+  size,
+}: {
+  at: Point;
+  name: string;
+  count: string;
+  fill: number;
+  /** Font size in metres; the pill scales with it. */
+  size: number;
+}) {
   const textRef = useRef<SVGTextElement>(null);
-  const [width, setWidth] = useState((name.length + count.length) * 0.72 + 2.2);
+  const pad = size * 0.62;
+  const [width, setWidth] = useState((name.length + count.length) * size * 0.55 + pad * 2);
   useLayoutEffect(() => {
     const measure = () => {
       const len = textRef.current?.getComputedTextLength();
-      if (len) setWidth(len + 1.6);
+      if (len) setWidth(len + pad * 2);
     };
     measure();
     document.fonts?.ready.then(measure).catch(() => {});
-  }, [name, count, fill]);
+  }, [name, count, fill, pad]);
   const border =
     fill >= 1 ? "var(--status-critical)" : fill >= WARNING_AT ? "var(--status-warning)" : "var(--border)";
   return (
@@ -679,26 +708,26 @@ function ZoneLabel({ at, name, count, fill }: { at: Point; name: string; count: 
         x={at[0]}
         y={at[1]}
         width={width}
-        height={1.9}
-        rx={0.95}
+        height={size * 1.46}
+        rx={size * 0.73}
         fill="var(--plan-pill)"
         stroke={border}
         strokeWidth={0.1}
       />
       <text
         ref={textRef}
-        x={at[0] + 0.8}
-        y={at[1] + 1.38}
-        fontSize={1.3}
+        x={at[0] + pad}
+        y={at[1] + size * 1.06}
+        fontSize={size}
         fontWeight={600}
         fill="var(--foreground)"
       >
         {name}
-        <tspan fontWeight={400} dx={0.6}>
+        <tspan fontWeight={400} dx={size * 0.46}>
           {count}
         </tspan>
         {fill >= 1 && (
-          <tspan fill="var(--status-critical)" fontWeight={700} dx={0.4}>
+          <tspan fill="var(--status-critical)" fontWeight={700} dx={size * 0.3}>
             !
           </tspan>
         )}
