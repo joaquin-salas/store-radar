@@ -5,17 +5,24 @@ import { ZONE_LABELS } from "@/lib/domain/catalog";
 import { type FloorPlan as Plan, SENSOR_LABELS, type ZoneShape } from "@/lib/domain/layout";
 import { createRng } from "@/lib/domain/random";
 import type { InStoreZone } from "@/lib/domain/types";
-import { formatDuration, formatInt } from "@/lib/format";
+import { formatDuration, formatInt, formatPercent } from "@/lib/format";
 import type { LiveSnapshot } from "@/lib/queries";
 import { cn } from "@/lib/utils";
 
 const HEAT_STEPS = 6; // --heat-0 … --heat-5
 const MAX_DOTS_PER_ZONE = 40;
 
-/** Headcount bucketed relative to the busiest zone (0 = empty, 5 = busiest). */
-function heatStep(people: number, maxPeople: number): number {
-  if (people <= 0 || maxPeople <= 0) return 0;
-  return Math.max(1, Math.min(HEAT_STEPS - 1, Math.ceil((people / maxPeople) * (HEAT_STEPS - 1))));
+/** Share of zone capacity in 20% buckets: 0 = empty, 1 = up to 20% … 5 = over 80%. */
+function heatStep(fill: number): number {
+  if (fill <= 0) return 0;
+  return Math.max(1, Math.min(HEAT_STEPS - 1, Math.ceil(fill * (HEAT_STEPS - 1))));
+}
+
+/** Alert level for a zone, matching the domain's ALERT_THRESHOLDS. */
+function zoneAlert(fill: number): "warning" | "critical" | null {
+  if (fill >= 1) return "critical";
+  if (fill >= 0.85) return "warning";
+  return null;
 }
 
 type Hover = { kind: "zone"; zone: ZoneShape } | { kind: "sensor"; id: string } | null;
@@ -30,11 +37,6 @@ export function FloorPlan({ plan, live }: FloorPlanProps) {
 
   const zoneLive = useMemo(() => new Map(live?.zones.map((z) => [z.zone, z])), [live]);
   const sensorLive = useMemo(() => new Map(live?.sensors.map((s) => [s.id, s])), [live]);
-
-  const people = plan.zones.map(({ zone }) =>
-    zone === "street" ? 0 : (zoneLive.get(zone as InStoreZone)?.occupancy ?? 0),
-  );
-  const maxPeople = Math.max(0, ...people);
 
   // People dots: positions are re-seeded on every snapshot so the plan visibly moves.
   const tick = live ? `${live.asOf.hour}:${live.asOf.minute}:${live.asOf.second}` : "init";
@@ -67,18 +69,24 @@ export function FloorPlan({ plan, live }: FloorPlanProps) {
         onMouseLeave={() => setHover(null)}
       >
         {/* Zones */}
-        {plan.zones.map((shape, i) => {
+        {plan.zones.map((shape) => {
           const { zone, rect } = shape;
           const isStreet = zone === "street";
           const live = isStreet ? undefined : zoneLive.get(zone as InStoreZone);
-          const step = isStreet ? 0 : heatStep(people[i], maxPeople);
+          const step = live ? heatStep(live.fill) : 0;
+          const alert = live ? zoneAlert(live.fill) : null;
           const active = hover?.kind === "zone" && hover.zone.zone === zone;
           return (
             <g
               key={zone}
               tabIndex={0}
               role="button"
-              aria-label={isStreet ? "Street" : `${ZONE_LABELS[zone]}: ${live?.occupancy ?? 0} people now`}
+              aria-label={
+                isStreet
+                  ? "Street"
+                  : `${ZONE_LABELS[zone]}: ${live?.occupancy ?? 0} of ${live?.capacity ?? "?"} people` +
+                    (alert === "critical" ? ", at capacity" : alert === "warning" ? ", nearly full" : "")
+              }
               className="cursor-default outline-none"
               onMouseEnter={() => setHover({ kind: "zone", zone: shape })}
               onFocus={() => setHover({ kind: "zone", zone: shape })}
@@ -111,8 +119,42 @@ export function FloorPlan({ plan, live }: FloorPlanProps) {
                   textAnchor="end"
                   className={cn("text-[1.9px] tabular-nums", step >= 4 ? "fill-white" : "fill-foreground")}
                 >
-                  {live?.occupancy ?? "–"}
+                  {live ? `${live.occupancy}/${live.capacity}` : "–"}
                 </text>
+              )}
+              {alert && (
+                // Status ring + badge; the alert list in "Right now" carries the text.
+                <g pointerEvents="none">
+                  <rect
+                    x={rect.x + 0.7}
+                    y={rect.y + 0.7}
+                    width={rect.w - 1.4}
+                    height={rect.h - 1.4}
+                    rx={0.6}
+                    fill="none"
+                    className={alert === "critical" ? "stroke-status-critical" : "stroke-status-warning"}
+                    strokeWidth={0.7}
+                    strokeDasharray={alert === "warning" ? "1.6 1" : undefined}
+                  />
+                  <circle
+                    cx={rect.x + rect.w - 3}
+                    cy={rect.y + rect.h - 3}
+                    r={1.6}
+                    className={alert === "critical" ? "fill-status-critical" : "fill-status-warning"}
+                  />
+                  <text
+                    x={rect.x + rect.w - 3}
+                    y={rect.y + rect.h - 3}
+                    textAnchor="middle"
+                    dominantBaseline="central"
+                    className={cn(
+                      "text-[2.2px] font-bold",
+                      alert === "critical" ? "fill-white" : "fill-black",
+                    )}
+                  >
+                    !
+                  </text>
+                </g>
               )}
             </g>
           );
@@ -226,6 +268,8 @@ function ZoneCard({ shape, live }: { shape: ZoneShape; live: LiveSnapshot | unde
       <dl className="grid grid-cols-[1fr_auto] gap-x-3 gap-y-0.5 tabular-nums">
         <dt className="text-muted-foreground">People now</dt>
         <dd className="text-right font-medium">{z?.occupancy ?? "–"}</dd>
+        <dt className="text-muted-foreground">{shape.zone === "fitting-rooms" ? "Cubicles" : "Capacity"}</dt>
+        <dd className="text-right">{z ? `${z.capacity} · ${formatPercent(z.fill)} full` : "–"}</dd>
         <dt className="text-muted-foreground">Visitors today</dt>
         <dd className="text-right">{z ? formatInt(z.visitorsToday) : "–"}</dd>
         <dt className="text-muted-foreground">Avg dwell</dt>
@@ -270,13 +314,21 @@ function SensorCard({
 export function HeatLegend() {
   return (
     <div className="text-muted-foreground flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
-      <span>Fewer people</span>
+      <span>Zone capacity used</span>
       <div className="flex gap-0.5" aria-hidden>
         {Array.from({ length: HEAT_STEPS }, (_, i) => (
           <span key={i} className="h-2.5 w-5 rounded-[2px]" style={{ background: `var(--heat-${i})` }} />
         ))}
       </div>
-      <span>More</span>
+      <span>0 → 100%</span>
+      <span className="flex items-center gap-1 sm:ml-3">
+        <span className="border-status-warning size-2.5 rounded-[2px] border border-dashed" aria-hidden />
+        ≥85%
+      </span>
+      <span className="flex items-center gap-1">
+        <span className="border-status-critical size-2.5 rounded-[2px] border" aria-hidden />
+        Full
+      </span>
       <span className="flex items-center gap-1 sm:ml-3">
         <span className="bg-status-good size-2 rounded-full" aria-hidden /> Sensor online
       </span>

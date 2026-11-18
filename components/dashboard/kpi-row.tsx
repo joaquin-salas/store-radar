@@ -49,28 +49,46 @@ const KPIS: KpiDef[] = [
   { label: "Peak hour", hint: "Busiest hour so far", value: (k) => formatHour(k.peakHour) },
 ];
 
-export function KpiRow({ params, comparisonLabel }: { params: ScopeParams; comparisonLabel: string }) {
-  const { data, isPending, isError } = useOverview(params);
-
-  if (isError) return <p className="text-destructive text-sm">Couldn&apos;t load KPIs.</p>;
-
+/** KPI cards with a comparison; pass `current`/`previous` or nothing while loading. */
+export function KpiRow({
+  current,
+  previous,
+  comparisonLabel,
+}: {
+  current: Kpis | undefined;
+  previous: Kpis | undefined;
+  comparisonLabel: string;
+}) {
   return (
     <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
       {KPIS.map((kpi) =>
-        isPending || !data ? (
+        !current || !previous ? (
           <Skeleton key={kpi.label} className="h-[104px] rounded-xl" />
         ) : (
           <KpiCard
             key={kpi.label}
             kpi={kpi}
-            current={data.kpis}
-            previous={data.previous}
+            current={current}
+            previous={previous}
             comparisonLabel={comparisonLabel}
           />
         ),
       )}
     </div>
   );
+}
+
+/** KPI row fed by the overview endpoint (compares with the previous period). */
+export function OverviewKpiRow({
+  params,
+  comparisonLabel,
+}: {
+  params: ScopeParams;
+  comparisonLabel: string;
+}) {
+  const { data, isError } = useOverview(params);
+  if (isError) return <p className="text-destructive text-sm">Couldn&apos;t load KPIs.</p>;
+  return <KpiRow current={data?.kpis} previous={data?.previous} comparisonLabel={comparisonLabel} />;
 }
 
 function KpiCard({

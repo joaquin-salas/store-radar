@@ -46,18 +46,20 @@ Next.js or React, which keeps it unit-testable and reusable by the AI tools.
 
 ### API (`app/api`)
 
-| Route            | Query params                                                  | Returns                                         |
-| ---------------- | ------------------------------------------------------------- | ----------------------------------------------- |
-| `/api/stores`    | —                                                             | Stores with open/closed status                  |
-| `/api/overview`  | `store`, `preset` \| `from`+`to`                              | KPIs + previous-period KPIs                     |
-| `/api/traffic`   | same + `granularity`                                          | Street vs. visitors series                      |
-| `/api/zones`     | same                                                          | Visitors, visit rate, dwell per zone            |
-| `/api/funnel`    | same                                                          | Street → entrance → browse → fitting → checkout |
-| `/api/hours`     | same                                                          | Average visitors per hour of day                |
-| `/api/compare`   | `preset` \| `from`+`to`                                       | KPIs per store                                  |
-| `/api/visits`    | `store`, `date`, `segment`, `sort`, `dir`, `page`, `pageSize` | Paginated visits                                |
-| `/api/customers` | `q`, `store`, `tier`, `sort`, `dir`, `page`, `pageSize`       | Paginated customers                             |
-| `/api/chat`      | POST (AI SDK UI messages)                                     | Streamed assistant response                     |
+| Route                   | Query params                                                  | Returns                                                                                     |
+| ----------------------- | ------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| `/api/stores`           | —                                                             | Stores with open/closed status                                                              |
+| `/api/stores/[id]/live` | —                                                             | People inside per zone, capacity, alerts, members inside, last 90 min (refetched every 5 s) |
+| `/api/stores/[id]/pace` | —                                                             | KPIs vs. a typical day, forecast, usual peak, hourly profile                                |
+| `/api/overview`         | `store`, `preset` \| `from`+`to`                              | KPIs + previous-period KPIs                                                                 |
+| `/api/traffic`          | same + `granularity`                                          | Street vs. visitors series                                                                  |
+| `/api/zones`            | same                                                          | Visitors, visit rate, dwell per zone                                                        |
+| `/api/funnel`           | same                                                          | Street → entrance → browse → fitting → checkout                                             |
+| `/api/hours`            | same                                                          | Average visitors per hour of day                                                            |
+| `/api/compare`          | `preset` \| `from`+`to`                                       | KPIs per store                                                                              |
+| `/api/visits`           | `store`, `date`, `segment`, `sort`, `dir`, `page`, `pageSize` | Paginated visits                                                                            |
+| `/api/customers`        | `q`, `store`, `tier`, `sort`, `dir`, `page`, `pageSize`       | Paginated customers                                                                         |
+| `/api/chat`             | POST (AI SDK UI messages)                                     | Streamed assistant response                                                                 |
 
 `store` is a store id or `all`. `preset` is `today`, `yesterday`, `7d` or `30d`
 (the last two include today). Custom ranges are capped at 92 days.
@@ -85,6 +87,16 @@ There is no database. All data is generated deterministically:
 5. **Caching.** Past days never change, so their summaries are memoised per
    server instance (bounded map). A cold 30-day chain query (current + previous
    period, 180 store-days) takes ~0.25 s; warm, ~5 ms.
+
+## Live view
+
+The home page is the live view of one store (`/stores/[id]`), built for a store manager deciding what to do now:
+
+- **Occupancy vs. capacity**: each store and zone has a capacity (fitting rooms = cubicles). The floor plan is coloured by % of capacity; zones at ≥85% get a warning and at ≥100% a critical alert (status colour + icon + text).
+- **Typical day**: the average of the same weekday over the previous 4 weeks, at the same time of day. KPIs, people inside and the hourly chart compare against it, which is fairer than "vs. yesterday".
+- **Pace**: visitors so far vs. typical, a full-day forecast (typical day scaled by today's ratio so far, weighted by how much of the day has passed) and the usual peak hour.
+- **Loyalty members inside**: registered customers present now, gold and silver first, for clienteling.
+- Occupancy is computed from each simulated visit's path and dwell times (`lib/domain/occupancy.ts`); full simulated days are kept in a small LRU cache so the 5-second refresh stays cheap.
 
 ## Client data flow
 

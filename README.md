@@ -47,7 +47,14 @@ hours.
 | Peak hour         | Hour of day with the most visitors                        |
 | Zone visit rate   | Visitors who passed through a zone ÷ store visitors       |
 
-KPIs for "today" are compared with yesterday **up to the same time of day**.
+On the live view, KPIs are compared with a **typical day**: the average of the same weekday over the previous 4 weeks, up to the same time of day.
+
+| Live KPI      | Definition                                                               |
+| ------------- | ------------------------------------------------------------------------ |
+| People inside | Visitors in the store right now (entered, not yet left)                  |
+| Capacity used | People inside ÷ store capacity; per zone, people in zone ÷ zone capacity |
+| vs. typical   | Relative difference with the typical day at the same time                |
+| Forecast      | Expected visitors for the full day, based on the pace so far             |
 
 ## Architecture
 

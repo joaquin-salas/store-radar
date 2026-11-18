@@ -24,6 +24,8 @@
   --color-chart-2: var(--chart-2);
   --color-chart-1: var(--chart-1);
   --color-status-good: var(--status-good);
+  --color-status-warning: var(--status-warning);
+  --color-status-critical: var(--status-critical);
   --color-ring: var(--ring);
   --color-input: var(--input);
   --color-border: var(--border);
@@ -82,6 +84,8 @@
   --heat-4: #2a78d6;
   --heat-5: #1c5cab;
   --status-good: #0ca30c;
+  --status-warning: #fab219;
+  --status-critical: #d03b3b;
   --radius: 0.625rem;
   --sidebar: oklch(0.985 0 0);
   --sidebar-foreground: oklch(0.145 0 0);
@@ -124,6 +128,8 @@
   --heat-4: #5598e7;
   --heat-5: #9ec5f4;
   --status-good: #0ca30c;
+  --status-warning: #fab219;
+  --status-critical: #d03b3b;
   --sidebar: oklch(0.205 0 0);
   --sidebar-foreground: oklch(0.985 0 0);
   --sidebar-primary: oklch(0.488 0.243 264.376);
