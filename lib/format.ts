@@ -20,3 +20,5 @@ export const formatHour = (hour: number | null) =>
 /** Relative change between two values, or null when there is no baseline. */
 export const relativeChange = (current: number, previous: number) =>
   previous > 0 ? (current - previous) / previous : null;
+
+export const safeRatio = (a: number, b: number) => (b > 0 ? a / b : 0);

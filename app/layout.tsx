@@ -1,5 +1,9 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { Suspense } from "react";
+import { AppSidebar } from "@/components/app-sidebar";
+import { Separator } from "@/components/ui/separator";
+import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Providers } from "./providers";
 import "./globals.css";
 
@@ -22,8 +26,23 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
-      <body className="flex min-h-full flex-col">
-        <Providers>{children}</Providers>
+      <body className="min-h-full">
+        <Providers>
+          <SidebarProvider>
+            {/* The sidebar reads the pathname (unknown for dynamic routes at build time). */}
+            <Suspense>
+              <AppSidebar />
+            </Suspense>
+            <SidebarInset>
+              <header className="flex h-12 shrink-0 items-center gap-2 border-b px-4">
+                <SidebarTrigger className="-ml-1" />
+                <Separator orientation="vertical" className="mr-1 h-4" />
+                <span className="text-sm font-medium">Store Radar</span>
+              </header>
+              <div className="mx-auto w-full max-w-7xl flex-1 p-4 sm:p-6">{children}</div>
+            </SidebarInset>
+          </SidebarProvider>
+        </Providers>
       </body>
     </html>
   );

@@ -119,3 +119,17 @@ export function useCustomers(p: Partial<CustomersQuery>) {
     placeholderData: keepPreviousData,
   });
 }
+
+/** How often the live floor plan refreshes. */
+export const LIVE_SNAPSHOT_MS = 5_000;
+
+export type LiveSnapshot = import("@/lib/domain/live").LiveSnapshot;
+
+export function useLiveSnapshot(storeId: string) {
+  return useQuery({
+    queryKey: [...queryKeys.all, "live", storeId] as const,
+    queryFn: () => fetchJson<LiveSnapshot>(`/api/stores/${storeId}/live`),
+    refetchInterval: LIVE_SNAPSHOT_MS,
+    // No placeholderData: another store's floor plan data must never show here.
+  });
+}
