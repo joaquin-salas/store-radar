@@ -51,6 +51,8 @@ export const STORES: readonly Store[] = [
     captureBase: 0.105,
     registeredRate: 0.12,
     capacity: 100,
+    returningRate: 0.28,
+    devicePool: 40_000,
     zoneCapacity: { entrance: 15, womenswear: 40, menswear: 24, kids: 14, "fitting-rooms": 24, checkout: 12 },
   },
   {
@@ -65,6 +67,8 @@ export const STORES: readonly Store[] = [
     captureBase: 0.11,
     registeredRate: 0.11,
     capacity: 85,
+    returningRate: 0.33,
+    devicePool: 30_000,
     zoneCapacity: { entrance: 12, womenswear: 32, menswear: 20, kids: 12, "fitting-rooms": 20, checkout: 10 },
   },
   {
@@ -79,6 +83,8 @@ export const STORES: readonly Store[] = [
     captureBase: 0.14,
     registeredRate: 0.15,
     capacity: 55,
+    returningRate: 0.45,
+    devicePool: 12_000,
     zoneCapacity: { entrance: 10, womenswear: 24, menswear: 14, kids: 0, "fitting-rooms": 14, checkout: 8 },
   },
 ];

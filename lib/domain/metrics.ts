@@ -8,6 +8,7 @@
  * - Avg dwell: mean total time inside the store per visit.
  * - Checkout rate: visitors who reached the checkout zone / visitors.
  * - Registered share: visitors identified as loyalty members / visitors.
+ * - Returning share: visitors whose device was seen on an earlier day / visitors.
  */
 import { ZONE_LABELS } from "./catalog";
 import { pad2 } from "./time";
@@ -33,6 +34,9 @@ export interface Kpis {
   checkoutRate: number;
   registeredVisitors: number;
   registeredShare: number;
+  /** Visitors whose device was seen on an earlier day. */
+  returningVisitors: number;
+  returningShare: number;
   /** Local hour with the most visitors, or null when there were none. */
   peakHour: number | null;
 }
@@ -43,6 +47,7 @@ export function computeKpis(days: readonly DaySummary[]): Kpis {
   let dwell = 0;
   let checkouts = 0;
   let registered = 0;
+  let returning = 0;
   const visitorsByHour = new Array<number>(24).fill(0);
 
   for (const day of days) {
@@ -52,6 +57,7 @@ export function computeKpis(days: readonly DaySummary[]): Kpis {
       dwell += h.dwellSec;
       checkouts += h.checkouts;
       registered += h.registered;
+      returning += h.returning;
       visitorsByHour[h.hour] += h.entrants;
     }
   }
@@ -66,6 +72,8 @@ export function computeKpis(days: readonly DaySummary[]): Kpis {
     checkoutRate: safeDiv(checkouts, visitors),
     registeredVisitors: registered,
     registeredShare: safeDiv(registered, visitors),
+    returningVisitors: returning,
+    returningShare: safeDiv(returning, visitors),
     peakHour: peak > 0 ? visitorsByHour.indexOf(peak) : null,
   };
 }

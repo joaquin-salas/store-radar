@@ -46,6 +46,10 @@ export interface Store {
   capacity: number;
   /** Comfortable maximum per zone; fitting rooms = number of cubicles. */
   zoneCapacity: Record<InStoreZone, number>;
+  /** Typical share of anonymous visitors whose device was seen before (locals vs. tourists). */
+  returningRate: number;
+  /** Size of the pool of known anonymous devices returning visitors are drawn from. */
+  devicePool: number;
 }
 
 export type CustomerTier = "bronze" | "silver" | "gold";
@@ -79,6 +83,8 @@ export interface Visit {
   totalDwellSec: number;
   /** Visitor reached the checkout zone (proxy for a purchase). */
   checkout: boolean;
+  /** Device seen on an earlier day (new vs. returning visitor). */
+  returning: boolean;
 }
 
 export interface ZoneAgg {
@@ -96,6 +102,8 @@ export interface HourAgg {
   entrants: number;
   /** Entrants identified as registered customers. */
   registered: number;
+  /** Entrants whose device was seen on an earlier day. */
+  returning: number;
   /** Entrants who visited at least one product zone. */
   browsed: number;
   /** Entrants who reached the checkout. */

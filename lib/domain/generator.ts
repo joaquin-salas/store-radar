@@ -38,7 +38,20 @@ export function openingHours(store: Store, date: LocalDate): OpeningHours | null
 }
 
 /** The fields of a visit needed for aggregation (no display strings). */
-export type RawVisit = Pick<Visit, "enteredSec" | "path" | "customerId" | "checkout" | "totalDwellSec">;
+export type RawVisit = Pick<
+  Visit,
+  "enteredSec" | "path" | "customerId" | "checkout" | "totalDwellSec" | "returning"
+> & {
+  /** Index into the store's pool of known anonymous devices; -1 for new or registered visitors. */
+  deviceIndex: number;
+};
+
+/** Share of registered members' visits that are repeat visits. */
+const REGISTERED_RETURNING_RATE = 0.9;
+/** Returning share by weekday (Sunday first): weekends bring more first-time visitors. */
+const RETURNING_WEEKDAY_FACTOR = [0.8, 1.05, 1.05, 1.05, 1.05, 0.95, 0.8];
+/** Returning visitors know the store: they reach the till a bit more often. */
+const RETURNING_CHECKOUT_BOOST = 1.2;
 
 export interface SimulatedDay {
   street: number[];
@@ -72,6 +85,7 @@ export function simulateDay(store: Store, date: LocalDate): SimulatedDay {
   const homeCustomers = customersOfStore(store.id);
   const anyCustomers = allCustomers();
   const hasZone = new Set(store.zones);
+  const returningRate = store.returningRate * RETURNING_WEEKDAY_FACTOR[dayOfWeek(date)];
 
   const street: number[] = [];
   const visits: RawVisit[] = [];
@@ -94,6 +108,16 @@ export function simulateDay(store: Store, date: LocalDate): SimulatedDay {
     );
 
     for (const enteredSec of startSecs) {
+      // Who is this? A registered member (identified via the app), a known anonymous
+      // device seen on earlier days, or a device never seen before.
+      let customerId: string | null = null;
+      if (rng.chance(store.registeredRate)) {
+        const pool = rng.chance(0.9) && homeCustomers.length ? homeCustomers : anyCustomers;
+        customerId = rng.pick(pool).id;
+      }
+      const returning = rng.chance(customerId ? REGISTERED_RETURNING_RATE : returningRate);
+      const deviceIndex = returning && !customerId ? rng.int(0, store.devicePool - 1) : -1;
+
       const path: ZoneStop[] = [{ zone: "entrance", dwellSec: dwell(rng, ZONE_BEHAVIOUR.entrance.dwellSec) }];
 
       let browsedApparel = false;
@@ -111,21 +135,15 @@ export function simulateDay(store: Store, date: LocalDate): SimulatedDay {
       }
 
       // Trying things on strongly increases the chance of reaching the till.
-      const checkoutProb = !browsed ? 0.03 : tried ? 0.62 : 0.2;
-      const checkout = rng.chance(checkoutProb);
+      const baseCheckout = !browsed ? 0.03 : tried ? 0.62 : 0.2;
+      const checkout = rng.chance(Math.min(0.9, baseCheckout * (returning ? RETURNING_CHECKOUT_BOOST : 1)));
       if (checkout) {
         path.push({ zone: "checkout", dwellSec: dwell(rng, ZONE_BEHAVIOUR.checkout.dwellSec) });
       }
 
-      let customerId: string | null = null;
-      if (rng.chance(store.registeredRate)) {
-        const pool = rng.chance(0.9) && homeCustomers.length ? homeCustomers : anyCustomers;
-        customerId = rng.pick(pool).id;
-      }
-
       let totalDwellSec = 0;
       for (const s of path) totalDwellSec += s.dwellSec;
-      visits.push({ enteredSec, path, customerId, checkout, totalDwellSec });
+      visits.push({ enteredSec, path, customerId, checkout, totalDwellSec, returning, deviceIndex });
     }
   }
 
@@ -138,11 +156,15 @@ export function generateDay(store: Store, date: LocalDate): GeneratedDay {
   const compactDate = date.replaceAll("-", "");
   return {
     street,
-    visits: visits.map((v, i) => {
+    visits: visits.map(({ deviceIndex, ...v }, i) => {
       const seq = i + 1;
+      // Stable hashed device ids: registered members and known devices keep the same
+      // id across days; a new device gets an id unique to this visit.
       const visitorHash = v.customerId
         ? hashString(`visitor|${v.customerId}`)
-        : hashString(`visitor|${store.id}|${date}|${seq}`);
+        : deviceIndex >= 0
+          ? hashString(`device|${store.id}|${deviceIndex}`)
+          : hashString(`visitor|${store.id}|${date}|${seq}`);
       return {
         id: `${store.id}-${compactDate}-${String(seq).padStart(5, "0")}`,
         storeId: store.id,
@@ -188,6 +210,7 @@ export function summarizeDay(
       street,
       entrants: 0,
       registered: 0,
+      returning: 0,
       browsed: 0,
       checkouts: 0,
       dwellSec: 0,
@@ -206,6 +229,7 @@ export function summarizeDay(
     // Path is [entrance, ...product zones, fitting-rooms?, checkout?]
     const second = v.path[1]?.zone;
     if (second === "womenswear" || second === "menswear" || second === "kids") h.browsed++;
+    if (v.returning) h.returning++;
     if (v.customerId) {
       h.registered++;
       customerVisits.push({ customerId: v.customerId, enteredSec: v.enteredSec, checkout: v.checkout });

@@ -13,6 +13,7 @@ function hour(h: number, partial: Partial<HourAgg> = {}): HourAgg {
     street: 0,
     entrants: 0,
     registered: 0,
+    returning: 0,
     browsed: 0,
     checkouts: 0,
     dwellSec: 0,

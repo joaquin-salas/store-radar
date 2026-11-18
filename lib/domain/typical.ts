@@ -44,6 +44,7 @@ function perDay(k: Kpis, days: number): Kpis {
     visitors: k.visitors / days,
     checkouts: k.checkouts / days,
     registeredVisitors: k.registeredVisitors / days,
+    returningVisitors: k.returningVisitors / days,
   };
 }
 

@@ -165,6 +165,8 @@ export function getVisitsPage(
 
   if (q.segment === "registered") visits = visits.filter((v) => v.customerId);
   if (q.segment === "anonymous") visits = visits.filter((v) => !v.customerId);
+  if (q.segment === "new") visits = visits.filter((v) => !v.returning);
+  if (q.segment === "returning") visits = visits.filter((v) => v.returning);
   if (q.segment === "checkout") visits = visits.filter((v) => v.checkout);
 
   const key: Record<VisitsQuery["sort"], (v: Visit) => number> = {

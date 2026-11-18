@@ -36,16 +36,17 @@ pnpm dev                     # http://localhost:3000
 All times are store-local (Europe/Madrid). Street counts only include opening
 hours.
 
-| KPI               | Definition                                                |
-| ----------------- | --------------------------------------------------------- |
-| Street passers-by | People detected by the street sensor during opening hours |
-| Visitors          | People who walked in (entrance sensor)                    |
-| Capture rate      | Visitors ÷ street passers-by                              |
-| Avg dwell time    | Mean total time inside the store per visit                |
-| Checkout rate     | Visitors who reached the checkout zone ÷ visitors         |
-| Registered share  | Visitors identified as loyalty members ÷ visitors         |
-| Peak hour         | Hour of day with the most visitors                        |
-| Zone visit rate   | Visitors who passed through a zone ÷ store visitors       |
+| KPI               | Definition                                                  |
+| ----------------- | ----------------------------------------------------------- |
+| Street passers-by | People detected by the street sensor during opening hours   |
+| Visitors          | People who walked in (entrance sensor)                      |
+| Capture rate      | Visitors ÷ street passers-by                                |
+| Avg dwell time    | Mean total time inside the store per visit                  |
+| Checkout rate     | Visitors who reached the checkout zone ÷ visitors           |
+| Registered share  | Visitors identified as loyalty members ÷ visitors           |
+| Returning share   | Visitors whose device was seen on an earlier day ÷ visitors |
+| Peak hour         | Hour of day with the most visitors                          |
+| Zone visit rate   | Visitors who passed through a zone ÷ store visitors         |
 
 On the live view, KPIs are compared with a **typical day**: the average of the same weekday over the previous 4 weeks, up to the same time of day.
 

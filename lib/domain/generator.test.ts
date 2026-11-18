@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { getStore } from "./catalog";
 import { createRng } from "./random";
-import { generateDay, getDaySummary, summarizeDay } from "./generator";
+import { generateDay, getDaySummary, simulateDay, summarizeDay } from "./generator";
 import type { LocalDateTime } from "./time";
 
 const granVia = getStore("mad-granvia")!;
@@ -55,7 +55,7 @@ describe("generateDay", () => {
 
 describe("summaries", () => {
   it("aggregate exactly the generated visits", () => {
-    const day = generateDay(granVia, "2026-11-10");
+    const day = simulateDay(granVia, "2026-11-10");
     const summary = summarizeDay(granVia, "2026-11-10", day);
     const entrants = summary.byHour.reduce((s, h) => s + h.entrants, 0);
     const checkouts = summary.byHour.reduce((s, h) => s + h.checkouts, 0);

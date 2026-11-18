@@ -92,6 +92,7 @@ export function getLiveSnapshot(storeId: string, now: LocalDateTime = localNow()
   const byZone = emptyZoneCounts();
   for (const p of present) byZone[p.zone]++;
   const peopleInside = present.length;
+  const returningInside = present.filter((p) => p.visit.returning).length;
 
   // --- Recent activity (last 15 min) -----------------------------------------
   const windowStart = nowSec - RECENT_WINDOW_SEC;
@@ -226,6 +227,8 @@ export function getLiveSnapshot(storeId: string, now: LocalDateTime = localNow()
     openNow,
     hoursToday: hours,
     peopleInside,
+    /** Of the people inside, how many are returning visitors (device seen on an earlier day). */
+    returningInside,
     capacity: store.capacity,
     fill: storeFill,
     typicalInsideNow: Math.round(typicalInsideNow),

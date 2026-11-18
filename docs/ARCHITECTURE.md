@@ -84,7 +84,8 @@ There is no database. All data is generated deterministically:
    after "now" are dropped and the current hour's street count is pro-rated.
    Each refetch therefore shows new visitors arriving. KPI comparisons for
    "today" use yesterday _up to the same time_, not a full day.
-5. **Caching.** Past days never change, so their summaries are memoised per
+5. **New vs. returning.** Each visit is new or returning (device seen on an earlier day). Returning shares differ per store (tourist flagship vs. local store), drop at weekends, and returning visitors reach checkout slightly more often. Returning anonymous visitors reuse a stable hashed device id from a per-store pool, so the same device shows up on several days; registered members are recognised by their account. _Simplification:_ a returning device's earlier visits are drawn from realistic rates rather than verified one by one, which would require re-simulating months of history per request.
+6. **Caching.** Past days never change, so their summaries are memoised per
    server instance (bounded map). A cold 30-day chain query (current + previous
    period, 180 store-days) takes ~0.25 s; warm, ~5 ms.
 

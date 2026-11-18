@@ -44,7 +44,7 @@ export const scopedRangeSchema = z.object({
 });
 
 export const VISIT_SORT_FIELDS = ["enteredAt", "totalDwellSec", "stops"] as const;
-export const VISIT_SEGMENTS = ["all", "registered", "anonymous", "checkout"] as const;
+export const VISIT_SEGMENTS = ["all", "registered", "anonymous", "new", "returning", "checkout"] as const;
 
 export const visitsQuerySchema = z.object({
   store: storeIdSchema,
