@@ -117,6 +117,16 @@ chart and table components (generative UI), so numbers in the chat always
 match the dashboard. Cost guards: small fast model, capped steps and message
 length, graceful message when no API key is configured.
 
+## Theme
+
+Tokens live in `app/globals.css` (light on `:root`, dark on `.dark`, toggled by `next-themes`; default follows the OS).
+
+- **Brand palette** `#f72585 #7209b7 #3a0ca3 #4361ee #4cc9f0`. Primary is `#4361ee` (`#5b7cfa` in dark); the full palette appears only as the brand gradient (logo, AI assistant, empty states).
+- **Chart series** (fixed order): blue `#4361ee`, pink `#f72585`, cyan `#0891b2` (darkened for contrast), purple `#7209b7`; dark-mode steps are separate. Validated for colour-blind separation and ≥3:1 contrast in both modes.
+- **Heatmap**: one-hue blue ramp `--heat-0…5`; labels on the strongest steps use `--heat-ink-high`.
+- **Status** (good / warning / critical) is reserved for state and always paired with an icon and text. Brand pink (`--highlight`) never means "bad".
+- **Cards**: white on a cool tinted background, 1px border, soft shadow (`shadow-card`), 14px radius. **Font**: Geist (tabular figures), Geist Mono for IDs.
+
 ## Next.js 16 specifics
 
 - **Cache Components** is enabled (`cacheComponents: true`). Route handlers

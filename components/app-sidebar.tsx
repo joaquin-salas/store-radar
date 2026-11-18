@@ -32,7 +32,7 @@ export function AppSidebar() {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" render={<Link href="/" />}>
-              <span className="bg-primary text-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
+              <span className="flex aspect-square size-8 items-center justify-center rounded-lg text-white [background:var(--brand-gradient)]">
                 <Radar className="size-4" />
               </span>
               <span className="grid flex-1 text-left leading-tight">

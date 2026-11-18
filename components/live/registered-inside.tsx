@@ -35,9 +35,7 @@ export function RegisteredInside({ live }: { live: LiveSnapshot | undefined }) {
               <li key={r.customerId} className="flex items-center gap-3 py-2">
                 <span className="flex min-w-0 flex-1 flex-col">
                   <span className="flex items-center gap-1.5 truncate font-medium">
-                    {r.tier === "gold" && (
-                      <Crown className="text-status-warning size-3.5 shrink-0" aria-hidden />
-                    )}
+                    {r.tier === "gold" && <Crown className="text-highlight size-3.5 shrink-0" aria-hidden />}
                     {r.name}
                   </span>
                   <span className="text-muted-foreground text-xs">
@@ -46,7 +44,7 @@ export function RegisteredInside({ live }: { live: LiveSnapshot | undefined }) {
                 </span>
                 <Badge
                   variant="outline"
-                  className={cn(r.tier === "gold" && "border-status-warning/60", "shrink-0")}
+                  className={cn(r.tier === "gold" && "border-highlight/60", "shrink-0")}
                 >
                   {TIER_LABEL[r.tier]}
                 </Badge>

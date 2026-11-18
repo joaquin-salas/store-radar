@@ -108,7 +108,10 @@ export function FloorPlan({ plan, live }: FloorPlanProps) {
               <text
                 x={rect.x + 2}
                 y={rect.y + (isStreet ? rect.h - 2.2 : 3.4)}
-                className={cn("text-[1.9px] font-medium", step >= 4 ? "fill-white" : "fill-foreground")}
+                className={cn(
+                  "text-[1.9px] font-medium",
+                  step >= 4 ? "fill-heat-ink-high" : "fill-foreground",
+                )}
               >
                 {ZONE_LABELS[zone]}
               </text>
@@ -117,7 +120,10 @@ export function FloorPlan({ plan, live }: FloorPlanProps) {
                   x={rect.x + rect.w - 2}
                   y={rect.y + 3.4}
                   textAnchor="end"
-                  className={cn("text-[1.9px] tabular-nums", step >= 4 ? "fill-white" : "fill-foreground")}
+                  className={cn(
+                    "text-[1.9px] tabular-nums",
+                    step >= 4 ? "fill-heat-ink-high" : "fill-foreground",
+                  )}
                 >
                   {live ? `${live.occupancy}/${live.capacity}` : "–"}
                 </text>

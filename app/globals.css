@@ -24,6 +24,9 @@
   --color-chart-2: var(--chart-2);
   --color-chart-1: var(--chart-1);
   --color-status-good: var(--status-good);
+  --color-highlight: var(--highlight);
+  --color-heat-ink-high: var(--heat-ink-high);
+  --shadow-card: var(--card-shadow);
   --color-status-warning: var(--status-warning);
   --color-status-critical: var(--status-critical);
   --color-ring: var(--ring);
@@ -51,93 +54,108 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
+/*
+ * Store Radar theme. Brand palette: #f72585 #7209b7 #3a0ca3 #4361ee #4cc9f0.
+ * Chart series are validated for colour-blind separation and contrast (light
+ * and dark); indigo and light cyan appear only in the brand gradient.
+ * Status colours mean status only and always ship with an icon + text.
+ */
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  /* Categorical palette (validated order: blue, orange, aqua, yellow, magenta) */
-  --chart-1: #2a78d6;
-  --chart-2: #eb6834;
-  --chart-3: #1baf7a;
-  --chart-4: #eda100;
-  --chart-5: #e87ba4;
-  /* Sequential blue ramp for occupancy heatmap, near-zero → high */
-  --heat-0: #eef4fc;
-  --heat-1: #cde2fb;
-  --heat-2: #9ec5f4;
-  --heat-3: #6da7ec;
-  --heat-4: #2a78d6;
-  --heat-5: #1c5cab;
+  --background: #f6f6fb;
+  --foreground: #14121f;
+  --card: #ffffff;
+  --card-foreground: #14121f;
+  --popover: #ffffff;
+  --popover-foreground: #14121f;
+  --primary: #4361ee;
+  --primary-foreground: #ffffff;
+  --secondary: #efeef6;
+  --secondary-foreground: #14121f;
+  --muted: #efeef6;
+  --muted-foreground: #6b6880;
+  --accent: #eef0fd;
+  --accent-foreground: #14121f;
+  --destructive: #d03b3b;
+  --border: #e7e6f0;
+  --input: #e2e1ec;
+  --ring: #4361ee;
+  --card-shadow: 0 1px 2px rgb(20 18 31 / 0.04), 0 4px 14px rgb(20 18 31 / 0.05);
+  --brand-gradient: linear-gradient(135deg, #7209b7, #3a0ca3 35%, #4361ee 65%, #4cc9f0);
+  /* Highlight: brand pink. Never means "bad" — that's --status-critical. */
+  --highlight: #f72585;
+  /* Chart series, fixed order: blue, pink, cyan (darkened), purple. 5 = neutral "other". */
+  --chart-1: #4361ee;
+  --chart-2: #f72585;
+  --chart-3: #0891b2;
+  --chart-4: #7209b7;
+  --chart-5: #8a879c;
+  /* Heatmap: one hue from the primary, empty → full. Ink for labels on the dark steps. */
+  --heat-0: #eef1fd;
+  --heat-1: #c7d2fb;
+  --heat-2: #9aaef7;
+  --heat-3: #6d89f2;
+  --heat-4: #4361ee;
+  --heat-5: #22339a;
+  --heat-ink-high: #ffffff;
   --status-good: #0ca30c;
   --status-warning: #fab219;
   --status-critical: #d03b3b;
   --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --sidebar: #ffffff;
+  --sidebar-foreground: #14121f;
+  --sidebar-primary: #4361ee;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #eef0fd;
+  --sidebar-accent-foreground: #2a3fb8;
+  --sidebar-border: #e7e6f0;
+  --sidebar-ring: #4361ee;
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: #3987e5;
-  --chart-2: #d95926;
-  --chart-3: #199e70;
-  --chart-4: #c98500;
-  --chart-5: #d55181;
-  --heat-0: #23272e;
-  --heat-1: #104281;
-  --heat-2: #1c5cab;
-  --heat-3: #2a78d6;
-  --heat-4: #5598e7;
-  --heat-5: #9ec5f4;
+  --background: #0f0d1a;
+  --foreground: #f1f0f7;
+  --card: #17142a;
+  --card-foreground: #f1f0f7;
+  --popover: #1b1830;
+  --popover-foreground: #f1f0f7;
+  --primary: #5b7cfa;
+  --primary-foreground: #ffffff;
+  --secondary: #221e38;
+  --secondary-foreground: #f1f0f7;
+  --muted: #221e38;
+  --muted-foreground: #a19db8;
+  --accent: #262245;
+  --accent-foreground: #f1f0f7;
+  --destructive: #e66767;
+  --border: #2a2640;
+  --input: #332e4d;
+  --ring: #5b7cfa;
+  --card-shadow: 0 1px 2px rgb(0 0 0 / 0.35);
+  --highlight: #f72585;
+  --chart-1: #5b7cfa;
+  --chart-2: #f72585;
+  --chart-3: #1aa3cc;
+  --chart-4: #9a5cf0;
+  --chart-5: #8a879c;
+  /* Dark ramp runs dark → light so "full" stands out against the dark surface. */
+  --heat-0: #1b1932;
+  --heat-1: #222a5c;
+  --heat-2: #283a8a;
+  --heat-3: #3150c0;
+  --heat-4: #5b7cfa;
+  --heat-5: #9aaef7;
+  --heat-ink-high: #0f0d1a;
   --status-good: #0ca30c;
   --status-warning: #fab219;
   --status-critical: #d03b3b;
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --sidebar: #12101f;
+  --sidebar-foreground: #f1f0f7;
+  --sidebar-primary: #5b7cfa;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #221e38;
+  --sidebar-accent-foreground: #f1f0f7;
+  --sidebar-border: #2a2640;
+  --sidebar-ring: #5b7cfa;
 }
 
 @layer base {
