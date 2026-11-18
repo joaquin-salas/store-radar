@@ -8,6 +8,7 @@
  */
 import { STORES, getStore } from "./catalog";
 import { type Point, type Polygon, inPolygon, polygonArea, rectPolygon } from "./geometry";
+import { BCN_PDG } from "./plans/bcn-pdg";
 import { MAD_GRANVIA } from "./plans/mad-granvia";
 import type { InStoreZone } from "./types";
 
@@ -63,6 +64,8 @@ export interface PlanSpec {
   door: { x1: number; x2: number };
   glass: (readonly [Point, Point])[];
   columns: Point[];
+  /** Square concrete pillars (default) or round cast-iron columns. */
+  columnStyle?: "square" | "round";
   staffAreas: { label: string; polygon: Polygon }[];
   streetLabel: string;
   zones: PlanZone[];
@@ -91,18 +94,6 @@ type Template = { zones: Partial<Record<InStoreZone, Rect>>; door: { x: number; 
 // Template grid: 100 × 58 units, scaled to the store's real size.
 const TEMPLATE_W = 100;
 const TEMPLATE_D = 58;
-
-const MEDIUM: Template = {
-  zones: {
-    womenswear: { x: 0, y: 0, w: 46, h: 30 },
-    menswear: { x: 46, y: 0, w: 30, h: 30 },
-    kids: { x: 76, y: 0, w: 24, h: 30 },
-    checkout: { x: 0, y: 30, w: 30, h: 28 },
-    entrance: { x: 30, y: 30, w: 44, h: 28 },
-    "fitting-rooms": { x: 74, y: 30, w: 26, h: 28 },
-  },
-  door: { x: 44, w: 16 },
-};
 
 const COMPACT: Template = {
   zones: {
@@ -201,7 +192,7 @@ function normalise(storeId: string, spec: PlanSpec, handmade: boolean): FloorPla
 
 const SPECS: Record<string, () => { spec: PlanSpec; handmade: boolean }> = {
   "mad-granvia": () => ({ spec: MAD_GRANVIA, handmade: true }),
-  "bcn-pdg": () => ({ spec: templateSpec("bcn-pdg", MEDIUM, true, 50, 32), handmade: false }),
+  "bcn-pdg": () => ({ spec: BCN_PDG, handmade: true }),
   "vlc-colon": () => ({ spec: templateSpec("vlc-colon", COMPACT, false, 44, 25), handmade: false }),
 };
 

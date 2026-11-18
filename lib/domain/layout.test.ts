@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { STORES, getStore } from "./catalog";
 import { simulateDay } from "./generator";
-import { inPolygon, polygonArea, rectPolygon } from "./geometry";
+import { distanceToEdges, inPolygon, polygonArea, rectPolygon } from "./geometry";
 import { zoneFlows } from "./flows";
 import { getFloorPlan, isBlocked, planAreas } from "./layout";
 import { getLiveSnapshot } from "./live";
@@ -19,6 +19,8 @@ describe("geometry", () => {
     expect(polygonArea(chamfered)).toBe(2400 - 18);
     expect(inPolygon([59, 39], chamfered)).toBe(false);
     expect(inPolygon([30, 20], chamfered)).toBe(true);
+    expect(distanceToEdges([30, 39.5], chamfered)).toBeCloseTo(0.5);
+    expect(distanceToEdges([57, 37], chamfered)).toBeCloseTo(0, 6); // on the chamfer
   });
 });
 
@@ -113,5 +115,18 @@ describe("flows", () => {
     const snap = getLiveSnapshot("mad-granvia", { date: "2026-11-18", hour: 18, minute: 0, second: 0 });
     expect(snap.flows.length).toBeGreaterThan(3);
     expect(snap.flows[0].from).toBe("street");
+  });
+});
+
+describe("Barcelona Passeig de Gràcia hand-made plan", () => {
+  const plan = getFloorPlan("bcn-pdg");
+
+  it("is an Eixample corner store: chamfer, light well, round columns, 10 cubicles", () => {
+    expect(plan.handmade).toBe(true);
+    expect(plan.outline).toContainEqual([0, 23]); // 9 m xamfrà on the front-left
+    expect(plan.staffAreas.map((a) => a.label)).toContain("Light well");
+    expect(plan.columnStyle).toBe("round");
+    expect(plan.fixtures.filter((f) => f.kind === "cubicle")).toHaveLength(10);
+    expect(getStore("bcn-pdg")!.zoneCapacity["fitting-rooms"]).toBe(20);
   });
 });
