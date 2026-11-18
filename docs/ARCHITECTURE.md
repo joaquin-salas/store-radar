@@ -106,11 +106,18 @@ Each store has a floor plan in metres (`lib/domain/layout.ts`, hand-made plans i
 staff-only areas (hatched, never tracked), zone polygons with label and flow
 anchors, fixtures (racks, tables, shelves, fitting cubicles, counters, tills,
 plinths, display windows, queue barriers) and sensors with a detection range.
-Madrid Gran Vía (60 × 40 m corner flagship, square pillars) and Barcelona
-Passeig de Gràcia (50 × 32 m Eixample building with a chamfered corner, a light
-well and round cast-iron columns) are hand-designed; Valencia still uses a
-generic template, normalised into the same shape. People dots keep 0.5 m away
-from the walls.
+All three plans are hand-designed:
+
+- **Madrid Gran Vía** — 60 × 40 m corner flagship with square pillars.
+- **Barcelona Passeig de Gràcia** — 50 × 32 m Eixample building with a
+  chamfered corner, a light well and round cast-iron columns.
+- **Valencia Colón** — 30 × 20 m neighbourhood store: off-centre door with the
+  till beside it, six cubicles along the back wall. Its capacity (40) and
+  street traffic are scaled to the smaller floor.
+
+Plans are drawn at one shared scale (14 px per metre), so a smaller store looks
+smaller; zone labels and flow arrows scale down slightly in small plans. People
+dots keep 0.5 m away from the walls.
 
 The plan is rendered as SVG with toggleable layers (remembered per browser):
 

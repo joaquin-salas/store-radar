@@ -74,7 +74,6 @@ describe("Madrid Gran Vía hand-made plan", () => {
   const plan = getFloorPlan("mad-granvia");
 
   it("is the 60 × 40 m flagship with a stock room and 10 fitting cubicles", () => {
-    expect(plan.handmade).toBe(true);
     expect(plan.staffAreas).toHaveLength(1);
     expect(plan.fixtures.filter((f) => f.kind === "cubicle")).toHaveLength(10);
     // Fitting-room capacity = 2 people per cubicle.
@@ -122,11 +121,26 @@ describe("Barcelona Passeig de Gràcia hand-made plan", () => {
   const plan = getFloorPlan("bcn-pdg");
 
   it("is an Eixample corner store: chamfer, light well, round columns, 10 cubicles", () => {
-    expect(plan.handmade).toBe(true);
     expect(plan.outline).toContainEqual([0, 23]); // 9 m xamfrà on the front-left
     expect(plan.staffAreas.map((a) => a.label)).toContain("Light well");
     expect(plan.columnStyle).toBe("round");
     expect(plan.fixtures.filter((f) => f.kind === "cubicle")).toHaveLength(10);
     expect(getStore("bcn-pdg")!.zoneCapacity["fitting-rooms"]).toBe(20);
+  });
+});
+
+describe("Valencia Colón hand-made plan", () => {
+  const plan = getFloorPlan("vlc-colon");
+  const store = getStore("vlc-colon")!;
+
+  it("is a small 600 m² store with 6 cubicles and the till next to the door", () => {
+    expect(planAreas(plan).outline).toBe(600);
+    expect(store.sizeM2).toBe(600);
+    expect(plan.fixtures.filter((f) => f.kind === "cubicle")).toHaveLength(6);
+    expect(store.zoneCapacity["fitting-rooms"]).toBe(12);
+    expect(plan.zones.some((z) => z.zone === "kids")).toBe(false);
+    const checkout = plan.zones.find((z) => z.zone === "checkout")!;
+    // The checkout starts within a few metres of the door.
+    expect(Math.min(...checkout.polygon.map((p) => p[0])) - plan.door.x2).toBeLessThanOrEqual(3);
   });
 });
