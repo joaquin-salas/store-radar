@@ -1,10 +1,10 @@
 "use client";
 
-import { ArrowDownRight, ArrowUpRight } from "lucide-react";
+import { ArrowDownRight, ArrowUpRight, Minus } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { Kpis } from "@/lib/domain/metrics";
-import { formatDuration, formatInt, formatPercent, relativeChange } from "@/lib/format";
+import { formatChange, formatDuration, formatInt, formatPercent, relativeChange } from "@/lib/format";
 import { type ScopeParams, useOverview } from "@/lib/queries";
 
 interface KpiDef {
@@ -107,8 +107,8 @@ function KpiCard({
   previous: Kpis;
   comparisonLabel: string;
 }) {
-  const change = kpi.compare ? relativeChange(kpi.compare(current), kpi.compare(previous)) : null;
-  const up = change !== null && change >= 0;
+  const ratio = kpi.compare ? relativeChange(kpi.compare(current), kpi.compare(previous)) : null;
+  const change = ratio === null ? null : formatChange(ratio);
   return (
     <Card size="sm">
       <CardHeader>
@@ -121,15 +121,18 @@ function KpiCard({
         ) : (
           <span className="flex items-center gap-1">
             {/* Direction is shown by icon + sign, not colour alone: more isn't always better. */}
-            {up ? <ArrowUpRight className="size-3.5" /> : <ArrowDownRight className="size-3.5" />}
-            <span className="text-foreground font-medium">
-              {up ? "+" : "−"}
-              {formatPercent(Math.abs(change))}
-            </span>
+            <ChangeIcon direction={change.direction} />
+            <span className="text-foreground font-medium">{change.text}</span>
             <span className="truncate">{comparisonLabel}</span>
           </span>
         )}
       </CardContent>
     </Card>
   );
+}
+
+function ChangeIcon({ direction }: { direction: ReturnType<typeof formatChange>["direction"] }) {
+  if (direction === "up") return <ArrowUpRight className="size-3.5 shrink-0" aria-hidden />;
+  if (direction === "down") return <ArrowDownRight className="size-3.5 shrink-0" aria-hidden />;
+  return <Minus className="size-3.5 shrink-0" aria-hidden />;
 }

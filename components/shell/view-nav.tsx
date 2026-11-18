@@ -5,8 +5,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { VIEWS, type ViewId, scopeForView, viewHref } from "@/lib/nav";
-import type { NavState } from "./nav-state";
+import { VIEWS, type ViewId } from "@/lib/nav";
+import { type NavState, hrefForView as hrefFor } from "./nav-state";
 
 export const VIEW_ICONS: Record<ViewId, LucideIcon> = {
   live: Radar,
@@ -15,8 +15,6 @@ export const VIEW_ICONS: Record<ViewId, LucideIcon> = {
   customers: Users,
   flows: Waypoints,
 };
-
-const hrefFor = (nav: NavState, view: ViewId) => viewHref(scopeForView(view, nav.scope, nav.lastStore), view);
 
 const tabClass =
   "flex h-7 items-center gap-1.5 rounded-md px-3 text-sm font-medium whitespace-nowrap transition-colors outline-none focus-visible:ring-3 focus-visible:ring-ring/50 [&_svg]:size-4";

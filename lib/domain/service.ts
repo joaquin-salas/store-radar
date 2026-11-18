@@ -7,38 +7,14 @@ import { allCustomers, getCustomer } from "./customers";
 import { getDayStatus } from "./status";
 import { getDaySummary, getDayVisits } from "./generator";
 import { type Granularity, computeKpis, funnel, hourProfile, trafficSeries, zoneStats } from "./metrics";
+import { type DateRange, isLiveRange as isLive, previousRange, rangeDays, resolveRange } from "./range";
 import type { CustomersQuery, RangeInput, VisitsQuery } from "./schemas";
-import { type LocalDate, type LocalDateTime, addDays, diffDays, eachDay, localNow } from "./time";
+import { type LocalDate, type LocalDateTime, addDays, eachDay, localNow } from "./time";
 import type { Customer, DaySummary, InStoreZone, Visit } from "./types";
 
+export { type DateRange, previousRange, resolveRange } from "./range";
+
 export type StoreScope = "all" | (string & {});
-
-export interface DateRange {
-  from: LocalDate;
-  to: LocalDate;
-}
-
-export function resolveRange(input: RangeInput, now: LocalDateTime = localNow()): DateRange {
-  if (input.from && input.to) return { from: input.from, to: input.to };
-  switch (input.preset ?? "today") {
-    case "today":
-      return { from: now.date, to: now.date };
-    case "yesterday": {
-      const y = addDays(now.date, -1);
-      return { from: y, to: y };
-    }
-    case "7d":
-      return { from: addDays(now.date, -6), to: now.date };
-    case "30d":
-      return { from: addDays(now.date, -29), to: now.date };
-  }
-}
-
-/** Same-length period immediately before `range`. */
-export function previousRange(range: DateRange): DateRange {
-  const len = diffDays(range.from, range.to) + 1;
-  return { from: addDays(range.from, -len), to: addDays(range.to, -len) };
-}
 
 function storeIds(scope: StoreScope): string[] {
   return scope === "all" ? STORES.map((s) => s.id) : [scope];
@@ -54,9 +30,6 @@ export function loadSummaries(scope: StoreScope, range: DateRange, now: LocalDat
   return out;
 }
 
-/** True when the range includes today, i.e. its numbers are still moving. */
-const isLive = (range: DateRange, now: LocalDateTime) => range.to >= now.date && range.from <= now.date;
-
 interface ScopedQuery {
   store: StoreScope;
   range: RangeInput;
@@ -67,7 +40,7 @@ export function getOverview(q: ScopedQuery, now: LocalDateTime = localNow()) {
   const prev = previousRange(range);
   // When the range is live, compare against the previous period up to the same
   // time of day — otherwise "today so far" would be compared with a full day.
-  const len = diffDays(range.from, range.to) + 1;
+  const len = rangeDays(range);
   const prevNow: LocalDateTime = range.to >= now.date ? { ...now, date: addDays(now.date, -len) } : now;
 
   return {

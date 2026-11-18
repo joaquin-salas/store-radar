@@ -10,9 +10,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { CHAIN, STORES } from "@/lib/domain/catalog";
-import { ALL_STORES, getView, viewHref } from "@/lib/nav";
+import { ALL_STORES, getView } from "@/lib/nav";
 import { useStores } from "@/lib/queries";
-import type { NavState } from "./nav-state";
+import { type NavState, hrefForScope } from "./nav-state";
 
 const items = [
   { value: ALL_STORES, label: "All stores" },
@@ -31,7 +31,7 @@ export function StoreSelect({ nav, className }: { nav: NavState; className?: str
       items={items}
       value={nav.scope}
       onValueChange={(value) => {
-        if (value && value !== nav.scope) router.push(viewHref(value, nav.view));
+        if (value && value !== nav.scope) router.push(hrefForScope(nav, value));
       }}
     >
       <SelectTrigger className={className ?? "w-64 font-medium"} aria-label="Store">

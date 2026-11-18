@@ -41,6 +41,7 @@ Next.js or React, which keeps it unit-testable and reusable by the AI tools.
 | `time.ts`      | Europe/Madrid local time, date arithmetic on `YYYY-MM-DD` strings     |
 | `generator.ts` | Simulates a store-day, summarises it, caches past days                |
 | `metrics.ts`   | KPI definitions (capture rate, dwell, funnel, hour profile…)          |
+| `range.ts`     | Resolve range presets, previous period (also used by the client)      |
 | `schemas.ts`   | Zod input schemas shared by API routes and AI tools                   |
 | `service.ts`   | Query functions: overview, traffic, zones, funnel, tables             |
 
@@ -105,6 +106,11 @@ assistant docks on the left and the page fills the rest.
   `/<scope>/live`, `/all/<single-store view>` → the flagship store, and the old
   `/stores/<id>` URLs.
 - Views not built yet are disabled tabs marked "coming soon".
+- **Date range in the URL** for views that use one (Analytics, Flows):
+  `?preset=7d` (default) or `?from=YYYY-MM-DD&to=YYYY-MM-DD`, the same keys
+  the API takes, validated with the same schema (`lib/range-params.ts`). The
+  header carries the range to other range views, and remembers it across a
+  detour through a view without one. Custom dates apply on blur or Enter.
 - **Assistant panel** (`components/assistant/`): lives in the root layout, so
   it keeps its state across navigation. On desktop (≥1024 px) it is a resizable
   panel (react-resizable-panels; open state and width remembered per browser);

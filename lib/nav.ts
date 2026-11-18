@@ -19,16 +19,18 @@ export interface ViewDef {
   label: string;
   /** The view can show the whole chain; otherwise it needs a single store. */
   allStores: boolean;
+  /** Filtered by a date range (`?preset=` or `?from=&to=`), carried over when switching views. */
+  usesRange: boolean;
   /** Built yet. Views that aren't show as disabled "Soon" tabs. */
   ready: boolean;
 }
 
 export const VIEWS: readonly ViewDef[] = [
-  { id: "live", label: "Live", allStores: false, ready: true },
-  { id: "analytics", label: "Analytics", allStores: true, ready: false },
-  { id: "visits", label: "Visits", allStores: false, ready: false },
-  { id: "customers", label: "Customers", allStores: true, ready: false },
-  { id: "flows", label: "Flows", allStores: true, ready: false },
+  { id: "live", label: "Live", allStores: false, usesRange: false, ready: true },
+  { id: "analytics", label: "Analytics", allStores: true, usesRange: true, ready: true },
+  { id: "visits", label: "Visits", allStores: false, usesRange: false, ready: false },
+  { id: "customers", label: "Customers", allStores: true, usesRange: false, ready: false },
+  { id: "flows", label: "Flows", allStores: true, usesRange: true, ready: false },
 ];
 
 export const DEFAULT_STORE = STORES[0].id;

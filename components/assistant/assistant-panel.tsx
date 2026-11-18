@@ -4,7 +4,7 @@ import { ArrowUp, Sparkles, X } from "lucide-react";
 import { useNavState } from "@/components/shell/nav-state";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { type ViewId, getView, scopeLabel } from "@/lib/nav";
+import { ALL_STORES, type ViewId, getView, scopeLabel } from "@/lib/nav";
 
 /** Example questions per view, shown until the assistant is connected. */
 const SUGGESTIONS: Record<ViewId, string[]> = {
@@ -29,7 +29,7 @@ const SUGGESTIONS: Record<ViewId, string[]> = {
  */
 export function AssistantPanel({ onClose }: { onClose: () => void }) {
   const nav = useNavState();
-  const where = scopeLabel(nav.scope);
+  const where = nav.scope === ALL_STORES ? "all stores" : scopeLabel(nav.scope);
   const view = getView(nav.view);
 
   return (

@@ -22,6 +22,7 @@ Read `docs/ARCHITECTURE.md` before structural changes.
 | `app/api/`                            | Thin route handlers over the domain                                                         |
 | `lib/queries.ts`                      | TanStack Query hooks (response types inferred from the domain)                              |
 | `lib/nav.ts`                          | Views, store scopes and `/<scope>/<view>` URL helpers (header, pages, redirects)            |
+| `lib/range-params.ts`                 | Date range in the page URL (`?preset=` / `?from=&to=`)                                      |
 | `app/[scope]/<view>/`                 | One folder per view, e.g. `app/[scope]/live/page.tsx`                                       |
 | `components/shell/`                   | App frame: header (store picker, view tabs), resizable workspace                            |
 | `components/assistant/`               | Assistant panel (docked on desktop, sheet on mobile) and its open state                     |
