@@ -8,7 +8,7 @@ import type { FloorPlan } from "@/lib/domain/layout";
 import { VISIT_SEGMENTS } from "@/lib/domain/schemas";
 import { localNow } from "@/lib/domain/time";
 import { formatDateRange } from "@/lib/format";
-import { useVisits } from "@/lib/queries";
+import { useVisitStats, useVisits } from "@/lib/queries";
 import {
   SEGMENT_LABELS,
   VISITS_PAGE_SIZE,
@@ -16,6 +16,7 @@ import {
   visitsFromSearch,
   visitsToSearch,
 } from "@/lib/visits-params";
+import { DurationChart, ZoneDwellChart } from "./visit-charts";
 import { VisitSheet } from "./visit-sheet";
 import { VisitsTable } from "./visits-table";
 
@@ -44,6 +45,7 @@ export function VisitsView({
     date,
     pageSize: VISITS_PAGE_SIZE,
   });
+  const { data: stats } = useVisitStats({ store: storeId, date, segment: params.segment });
 
   // Filters reset to the first page; sorting and paging keep the rest.
   // Opening a visit adds a history entry, so Back closes the drawer.
@@ -91,6 +93,11 @@ export function VisitsView({
             {SEGMENT_LABELS[s]}
           </Button>
         ))}
+      </div>
+
+      <div className="grid gap-4 @3xl:grid-cols-2">
+        <DurationChart stats={stats} />
+        <ZoneDwellChart stats={stats} />
       </div>
 
       {isError ? (

@@ -8,6 +8,7 @@ import {
   getOverview,
   getTraffic,
   getVisit,
+  getVisitStats,
   getVisitsPage,
   getZones,
   previousRange,
@@ -199,5 +200,29 @@ describe("visit in progress", () => {
   it("filters on what is known now", () => {
     const rows = getVisitsPage({ ...today, segment: "checkout" }, NOW).rows;
     expect(rows.every((r) => r.checkout && r.path.some((s) => s.zone === "checkout"))).toBe(true);
+  });
+});
+
+describe("visit stats", () => {
+  it("matches the visits table and leaves unfinished time out", () => {
+    const q = { store: "mad-granvia", date: NOW.date, segment: "all" } as const;
+    const stats = getVisitStats(q, NOW);
+    const page = getVisitsPage({ ...q, sort: "enteredAt", dir: "desc", page: 0, pageSize: 1 }, NOW);
+    expect(stats.visits).toBe(page.total);
+    expect(stats.finished + stats.inside).toBe(stats.visits);
+    expect(stats.inside).toBeGreaterThan(0);
+    expect(stats.histogram.reduce((a, b) => a + b.visits, 0)).toBe(stats.finished);
+    expect(stats.medianSec).toBeGreaterThan(0);
+    expect(stats.p90Sec).toBeGreaterThanOrEqual(stats.medianSec);
+    expect(stats.zones.map((z) => z.zone)).not.toContain("entrance");
+  });
+
+  it("follows the segment filter", () => {
+    const all = getVisitStats({ store: "vlc-colon", date: "2026-11-17", segment: "all" }, NOW);
+    const checkout = getVisitStats({ store: "vlc-colon", date: "2026-11-17", segment: "checkout" }, NOW);
+    expect(checkout.visits).toBeLessThan(all.visits);
+    expect(checkout.inside).toBe(0); // past day: nobody is still inside
+    expect(checkout.zones.find((z) => z.zone === "checkout")!.visitShare).toBe(1);
+    expect(all.zones.map((z) => z.zone)).not.toContain("kids"); // Valencia has no kids zone
   });
 });

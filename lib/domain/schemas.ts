@@ -65,6 +65,10 @@ export const visitsQuerySchema = z.object({
 
 export type VisitsQuery = z.infer<typeof visitsQuerySchema>;
 
+export const visitStatsQuerySchema = visitsQuerySchema.pick({ store: true, date: true, segment: true });
+
+export type VisitStatsQuery = z.infer<typeof visitStatsQuerySchema>;
+
 export const CUSTOMER_SORT_FIELDS = ["name", "visits", "checkouts", "lastVisit", "memberSince"] as const;
 
 export const customersQuerySchema = z.object({

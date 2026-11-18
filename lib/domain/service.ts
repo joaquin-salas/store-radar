@@ -8,7 +8,14 @@ import { getDayStatus } from "./status";
 import { getDaySummary, getDayVisits } from "./generator";
 import { type Granularity, computeKpis, funnel, hourProfile, trafficSeries, zoneStats } from "./metrics";
 import { type DateRange, isLiveRange as isLive, previousRange, rangeDays, resolveRange } from "./range";
-import { type CustomersQuery, type RangeInput, VISIT_ID_PATTERN, type VisitsQuery } from "./schemas";
+import {
+  type CustomersQuery,
+  type RangeInput,
+  VISIT_ID_PATTERN,
+  type VisitStatsQuery,
+  type VisitsQuery,
+} from "./schemas";
+import { durationHistogram, quantile, zoneDwell } from "./visit-stats";
 import {
   type LocalDate,
   type LocalDateTime,
@@ -130,6 +137,15 @@ function paginate<T>(rows: T[], page: number, pageSize: number): Page<T> {
   return { rows: rows.slice(page * pageSize, (page + 1) * pageSize), total: rows.length, page, pageSize };
 }
 
+const SEGMENT_FILTERS: Record<VisitsQuery["segment"], (v: Visit) => boolean> = {
+  all: () => true,
+  registered: (v) => v.customerId !== null,
+  anonymous: (v) => v.customerId === null,
+  new: (v) => !v.returning,
+  returning: (v) => v.returning,
+  checkout: (v) => v.checkout,
+};
+
 export interface VisitRow extends Omit<Visit, "enteredSec"> {
   customerName: string | null;
   customerTier: Customer["tier"] | null;
@@ -155,11 +171,7 @@ export function getVisitsPage(
   const insideIds = new Set(known.filter((k) => k.inside).map((k) => k.visit.id));
   let visits = known.map((k) => k.visit);
 
-  if (q.segment === "registered") visits = visits.filter((v) => v.customerId);
-  if (q.segment === "anonymous") visits = visits.filter((v) => !v.customerId);
-  if (q.segment === "new") visits = visits.filter((v) => !v.returning);
-  if (q.segment === "returning") visits = visits.filter((v) => v.returning);
-  if (q.segment === "checkout") visits = visits.filter((v) => v.checkout);
+  visits = visits.filter(SEGMENT_FILTERS[q.segment]);
 
   const key: Record<VisitsQuery["sort"], (v: Visit) => number> = {
     enteredAt: (v) => v.enteredSec,
@@ -258,6 +270,39 @@ export function getVisit(visitId: string, now: LocalDateTime = localNow()): Visi
     ...toVisitRow(known.visit, known.inside),
     timeline: known.timeline,
     leftAt: known.leftSec === null ? null : formatClock(known.leftSec),
+  };
+}
+
+/**
+ * How long visits last and how long people stay per zone, for one store-day
+ * and segment (the same visits the table lists). Durations use finished visits
+ * only; zone times use completed stops, so nothing still under way is counted.
+ */
+export function getVisitStats(q: VisitStatsQuery, now: LocalDateTime = localNow()) {
+  const date = q.date ?? now.date;
+  const nowSec = date === now.date ? secondsOfDay(now) : Infinity;
+  const known = getDayVisits(q.store, date, now)
+    .map((v) => visitAsOf(v, nowSec))
+    .filter((k) => SEGMENT_FILTERS[q.segment](k.visit));
+  const finished = known.filter((k) => !k.inside).map((k) => k.visit.totalDwellSec);
+  const sorted = [...finished].sort((a, b) => a - b);
+  const zones = getStore(q.store)!.zones.filter((z) => z !== "entrance");
+
+  return {
+    store: q.store,
+    date,
+    segment: q.segment,
+    visits: known.length,
+    finished: finished.length,
+    inside: known.length - finished.length,
+    medianSec: quantile(sorted, 0.5),
+    p90Sec: quantile(sorted, 0.9),
+    histogram: durationHistogram(finished),
+    zones: zoneDwell(
+      known.map((k) => k.visit),
+      zones,
+      (i) => known[i].inside,
+    ),
   };
 }
 
