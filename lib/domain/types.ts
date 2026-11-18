@@ -42,6 +42,10 @@ export interface Store {
   captureBase: number;
   /** Share of visitors identified as registered customers (loyalty app). */
   registeredRate: number;
+  /** Maximum people allowed inside at once (safety/comfort limit). */
+  capacity: number;
+  /** Comfortable maximum per zone; fitting rooms = number of cubicles. */
+  zoneCapacity: Record<InStoreZone, number>;
 }
 
 export type CustomerTier = "bronze" | "silver" | "gold";

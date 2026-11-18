@@ -50,6 +50,8 @@ export const STORES: readonly Store[] = [
     streetBase: 1650,
     captureBase: 0.105,
     registeredRate: 0.12,
+    capacity: 100,
+    zoneCapacity: { entrance: 15, womenswear: 40, menswear: 24, kids: 14, "fitting-rooms": 24, checkout: 12 },
   },
   {
     id: "bcn-pdg",
@@ -62,6 +64,8 @@ export const STORES: readonly Store[] = [
     streetBase: 1400,
     captureBase: 0.11,
     registeredRate: 0.11,
+    capacity: 85,
+    zoneCapacity: { entrance: 12, womenswear: 32, menswear: 20, kids: 12, "fitting-rooms": 20, checkout: 10 },
   },
   {
     id: "vlc-colon",
@@ -74,6 +78,8 @@ export const STORES: readonly Store[] = [
     streetBase: 700,
     captureBase: 0.14,
     registeredRate: 0.15,
+    capacity: 55,
+    zoneCapacity: { entrance: 10, womenswear: 24, menswear: 14, kids: 0, "fitting-rooms": 14, checkout: 8 },
   },
 ];
 

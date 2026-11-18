@@ -245,7 +245,7 @@ export function getDaySummary(storeId: string, date: LocalDate, now: LocalDateTi
     return summarizeDay(store, date, { street: Array(24).fill(0), visits: [] }, 0);
   }
   if (date === now.date) {
-    return summarizeDay(store, date, simulateDay(store, date), secondsOfDay(now));
+    return summarizeDay(store, date, getSimulatedDay(storeId, date), secondsOfDay(now));
   }
 
   const key = `${storeId}|${date}`;
@@ -258,6 +258,30 @@ export function getDaySummary(storeId: string, date: LocalDate, now: LocalDateTi
     summaryCache.set(key, summary);
   }
   return summary;
+}
+
+// A full simulated day is deterministic — today's included, since "live" is only a
+// cut-off applied afterwards — so a small LRU of lean simulations serves the live
+// view (which reads several days every few seconds) without re-simulating.
+const SIMULATION_CACHE_LIMIT = 48;
+const simulationCache = new Map<string, SimulatedDay>();
+
+/** Full-day lean simulation for a store-day, memoised (LRU). */
+export function getSimulatedDay(storeId: string, date: LocalDate): SimulatedDay {
+  const key = `${storeId}|${date}`;
+  let day = simulationCache.get(key);
+  if (day) {
+    simulationCache.delete(key); // refresh LRU position
+  } else {
+    const store = getStore(storeId);
+    if (!store) throw new Error(`Unknown store: ${storeId}`);
+    day = simulateDay(store, date);
+    if (simulationCache.size >= SIMULATION_CACHE_LIMIT) {
+      simulationCache.delete(simulationCache.keys().next().value!);
+    }
+  }
+  simulationCache.set(key, day);
+  return day;
 }
 
 /** Visits for one store-day as seen at `now` (today only includes visits so far). */

@@ -133,3 +133,14 @@ export function useLiveSnapshot(storeId: string) {
     // No placeholderData: another store's floor plan data must never show here.
   });
 }
+
+export type Pace = import("@/lib/domain/typical").Pace;
+
+/** Today's pace vs. a typical day (KPIs, forecast, hourly profile). */
+export function usePace(storeId: string) {
+  return useQuery({
+    queryKey: [...queryKeys.all, "pace", storeId] as const,
+    queryFn: () => fetchJson<Pace>(`/api/stores/${storeId}/pace`),
+    refetchInterval: LIVE_REFRESH_MS,
+  });
+}
