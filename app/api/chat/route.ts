@@ -48,8 +48,20 @@ function friendlyError(error: unknown): string {
   return "Something went wrong while answering. Try again or rephrase the question.";
 }
 
+/**
+ * Whether the AI Gateway can authenticate: an API key, the OIDC token from
+ * `vercel env pull` (local), or, on Vercel, the token Vercel puts on each
+ * request's `x-vercel-oidc-token` header (it isn't an env var at runtime).
+ */
+const hasGatewayAuth = (request: Request) =>
+  Boolean(
+    process.env.AI_GATEWAY_API_KEY ||
+    process.env.VERCEL_OIDC_TOKEN ||
+    request.headers.get("x-vercel-oidc-token"),
+  );
+
 export async function POST(request: Request) {
-  if (!process.env.AI_GATEWAY_API_KEY && !process.env.VERCEL_OIDC_TOKEN) return fail("not-configured", 503);
+  if (!hasGatewayAuth(request)) return fail("not-configured", 503);
 
   const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "local";
   if (!allowRequest(ip, RATE_LIMIT.requests, RATE_LIMIT.windowMs, Date.now()))
