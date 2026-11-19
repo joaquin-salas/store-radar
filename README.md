@@ -32,7 +32,8 @@ you're looking at.
 ## Stack
 
 Next.js 16 (App Router) · TypeScript · shadcn/ui · Recharts · TanStack Query ·
-TanStack Table · Vercel AI SDK + AI Gateway · Zod · Vitest · deployed on Vercel.
+TanStack Table · Vercel AI SDK + AI Gateway · Zod · Vitest · deployed on Vercel · built with
+Claude Code.
 
 ## Getting started
 
