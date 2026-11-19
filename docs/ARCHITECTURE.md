@@ -110,8 +110,8 @@ There is no database. All data is generated deterministically:
 ## Navigation and layout
 
 There is no sidebar. The header holds the brand, a **store picker** and the
-**view tabs** (Live, Analytics, Visits, Customers, Flows); below it, the AI
-assistant docks on the left and the page fills the rest.
+**view tabs** (Live, Analytics, Visits, Customers, Flows); below it, the page
+fills the left and the AI assistant docks on the right, under the Ask button.
 
 - **URLs are `/<scope>/<view>`**: `/mad-granvia/live`, `/all/analytics`. The
   scope is a store id or `all`. Views and the scopes they accept are defined
@@ -167,10 +167,11 @@ assistant docks on the left and the page fills the rest.
   are fixed per zone; checkout and outcomes stay neutral.
 - **Assistant panel** (`components/assistant/`): lives in the root layout, so
   it keeps its state across navigation. On desktop (≥1024 px) it is a resizable
-  panel (react-resizable-panels; open state and width remembered per browser);
-  on smaller screens it opens as a sheet. Ctrl/⌘ + I toggles it. It knows the
-  current store and view. Until the AI is connected it shows an empty state
-  with example questions.
+  panel on the right (react-resizable-panels) that opens at a third of the
+  width, as a main feature (320 px to half the width; open state remembered per
+  browser); on smaller screens it opens as a sheet from the right. Ctrl/⌘ + I toggles it. It knows the
+  current store, view and date range, and shows example questions for the
+  view on an empty chat (see AI assistant below).
 - **Pages size to their container, not the window.** The page area is a CSS
   container, so page grids use container queries (`@3xl:`, `@4xl:`…) and adapt
   when the assistant is open. Only the header uses window breakpoints.
@@ -230,14 +231,36 @@ sit inside it.
 - Tables (TanStack Table) use server-side pagination/sorting: the client sends
   page/sort state as query params.
 
-## AI assistant (planned)
+## AI assistant
 
-`POST /api/chat` uses the AI SDK's `streamText` with tools that call the same
-`lib/domain/service.ts` functions and reuse the Zod schemas from
-`lib/domain/schemas.ts`. The client (`useChat`) renders tool results as real
-chart and table components (generative UI), so numbers in the chat always
-match the dashboard. Cost guards: small fast model, capped steps and message
-length, graceful message when no API key is configured.
+`POST /api/chat` (`app/api/chat/route.ts`) runs the AI SDK's `streamText`
+through the **Vercel AI Gateway**: `openai/gpt-5-mini`, with
+`google/gemini-2.5-flash-lite` as a gateway fallback. It authenticates with
+`AI_GATEWAY_API_KEY` or, on Vercel and after `vercel link`, the
+`VERCEL_OIDC_TOKEN`. Without either it answers 503 and the panel says so.
+
+- **Tools** (`lib/ai/tools.ts`) are thin wrappers over `lib/domain/service.ts`
+  with the same Zod inputs as the API routes; they only trim results to save
+  tokens. The model never computes or types a number.
+- **Ad-hoc charts and tables.** `queryMetrics` (`lib/domain/query.ts`) runs
+  any KPI broken down by up to two of store, date, weekday, hour and zone, with
+  weekday/hour/zone filters, on the same daily summaries as `metrics.ts`
+  (tests check its totals equal the overview, store, zone and heatmap
+  numbers). The model adds only a `display` (`bar`, `line`, `table` or
+  `number` and a title). `lib/ai/chart-plan.ts` turns that into a chart that
+  follows the chart rules: one axis (other units go to the table), at most four
+  series, colour by store/zone identity, lines only over time; otherwise it
+  falls back to a table. Every chart has a Chart/Table switch and CSV download.
+- **Panel** (`components/assistant/`): `useChat` on one `Chat` instance kept
+  outside React, so closing the panel keeps the conversation. Messages render
+  text with a small markdown renderer (only links into the app become links)
+  and tool parts as charts, KPI tiles or lists.
+- **Context**: each message sends the current scope, view and date range; the
+  instructions (`lib/ai/instructions.ts`) add today's store time and the store
+  list.
+- **Cost guards**: small model with low reasoning effort, at most 6 steps, the
+  last 20 messages, 1,500 characters per message, 20 requests per 10 minutes per
+  IP (best effort, in memory), and the AI Gateway monthly budget as the hard cap.
 
 ## Theme
 

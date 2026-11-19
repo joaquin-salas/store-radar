@@ -27,7 +27,9 @@ Read `docs/ARCHITECTURE.md` before structural changes.
 | `lib/customers-params.ts`             | Members table state in the URL (search, tier, segment, sort, page)                          |
 | `app/[scope]/<view>/`                 | One folder per view, e.g. `app/[scope]/live/page.tsx`                                       |
 | `components/shell/`                   | App frame: header (store picker, view tabs), resizable workspace                            |
-| `components/assistant/`               | Assistant panel (docked on desktop, sheet on mobile) and its open state                     |
+| `lib/ai/`                             | Assistant: tools over the service, instructions, chart planning for ad-hoc charts           |
+| `app/api/chat/`                       | Assistant route: `streamText` via the Vercel AI Gateway, cost guards                        |
+| `components/assistant/`               | Assistant panel (docked on desktop, sheet on mobile), chat, chart/table results             |
 | `components/live/`                    | Live view: floor plan, right-now panel, pace, loyalty members                               |
 | `components/flows/`                   | Flows view: journey Sankey, chord diagram (d3-chord), zone matrix, top routes               |
 | `app/globals.css`                     | Theme tokens (light on `:root`, dark on `.dark`)                                            |
