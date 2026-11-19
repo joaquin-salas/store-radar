@@ -95,6 +95,8 @@ export async function POST(request: Request) {
       stream: result.stream,
       tools,
       originalMessages: messages,
+      // The panel doesn't show reasoning; don't send the model's working notes to the browser.
+      sendReasoning: false,
       onError: friendlyError,
       redactToolErrors: false,
     }),
