@@ -13,12 +13,13 @@ import { type Page, paginate } from "./page";
 import {
   type CustomerSegment,
   type CustomersQuery,
+  MEMBER_LOOKBACK_DAYS,
   type MemberOverviewQuery,
   SEGMENT_DAYS,
   SEGMENT_LABELS,
 } from "./schemas";
 
-export { SEGMENT_DAYS, SEGMENT_LABELS } from "./schemas";
+export { MEMBER_LOOKBACK_DAYS, SEGMENT_DAYS, SEGMENT_LABELS } from "./schemas";
 import { loadSummaries } from "./summaries";
 import {
   type LocalDate,
@@ -32,8 +33,6 @@ import {
 } from "./time";
 import type { Customer, InStoreZone } from "./types";
 
-/** How far back member activity is read (last visit, profile calendar). */
-export const MEMBER_LOOKBACK_DAYS = 90;
 /** Window for visit counts and programme KPIs. */
 export const MEMBER_WINDOW_DAYS = 30;
 
@@ -129,6 +128,7 @@ export function getCustomersPage(q: CustomersQuery, now: LocalDateTime = localNo
       (q.store === "all" || c.homeStoreId === q.store) &&
       (q.tier === "all" || c.tier === q.tier) &&
       (q.segment === "all" || c.segment === q.segment) &&
+      (!q.inactiveDays || c.lastVisit === null || diffDays(c.lastVisit, now.date) >= q.inactiveDays) &&
       (!needle || c.name.toLowerCase().includes(needle) || c.id.toLowerCase().includes(needle)),
   );
 

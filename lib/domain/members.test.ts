@@ -86,6 +86,19 @@ describe("member queries", () => {
     expect(total).toBe(allCustomers().length);
   });
 
+  it("filters members who haven't visited for a number of days", () => {
+    const inactive = getCustomersPage({ ...base, tier: "gold", inactiveDays: 30 }, NOW);
+    expect(inactive.total).toBeGreaterThan(0);
+    for (const r of inactive.rows) {
+      expect(r.tier).toBe("gold");
+      if (r.lastVisit) expect(diffDays(r.lastVisit, NOW.date)).toBeGreaterThanOrEqual(30);
+    }
+    // Everyone is either inactive for 30+ days or visited in the last 29.
+    const gold = getCustomersPage({ ...base, tier: "gold", pageSize: 100_000 }, NOW).rows;
+    const recent = gold.filter((r) => r.lastVisit && diffDays(r.lastVisit, NOW.date) < 30).length;
+    expect(inactive.total + recent).toBe(gold.length);
+  });
+
   it("reports programme KPIs that agree with the segments and the table", () => {
     const o = getMemberOverview({ store: "vlc-colon" }, NOW);
     const members = getCustomersPage({ ...base, store: "vlc-colon" }, NOW);

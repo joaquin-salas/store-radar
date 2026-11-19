@@ -22,11 +22,13 @@ import { type DateRange, isLiveRange as isLive, previousRange, rangeDays, resolv
 import { crossStore, flowKpis, journey, mergeRoutes, topRoutes, zoneMatrix } from "./flow-stats";
 import {
   type FlowsQuery,
+  type MetricsQuery,
   type RangeInput,
   VISIT_ID_PATTERN,
   type VisitStatsQuery,
   type VisitsQuery,
 } from "./schemas";
+import { queryMetrics } from "./query";
 import { durationHistogram, quantile, zoneDwell } from "./visit-stats";
 import {
   type LocalDate,
@@ -176,6 +178,14 @@ export function getFlows(q: FlowsQuery, now: LocalDateTime = localNow()) {
     top: topRoutes(routes),
     crossStore: q.store === "all" ? crossStore(days) : null,
   };
+}
+
+/**
+ * Any KPI broken down by store, date, weekday, hour or zone (see `query.ts`).
+ * Backs the assistant's ad-hoc charts and tables.
+ */
+export function getMetrics(q: MetricsQuery, now: LocalDateTime = localNow()) {
+  return queryMetrics(q, now);
 }
 
 // --- Tables ------------------------------------------------------------------
