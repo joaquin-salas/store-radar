@@ -65,3 +65,19 @@ export function scopeLabel(scope: Scope): string {
   if (scope === ALL_STORES) return "All stores";
   return STORES.find((s) => s.id === scope)?.name ?? scope;
 }
+
+/**
+ * Whether a page path exists: `/<scope>`, `/<scope>/<view>` or a member profile
+ * `/<scope>/customers/<id>`. Used before rendering to answer unknown pages with
+ * a real 404 (once a page streams, its status is already 200). `memberExists`
+ * is passed in so client code never bundles the member list.
+ */
+export function isKnownPage(pathname: string, memberExists: (id: string) => boolean): boolean {
+  const [scope, view, id, ...rest] = pathname.split("/").filter(Boolean);
+  if (scope === undefined) return true;
+  if (!isScope(scope) || rest.length > 0) return false;
+  if (view === undefined) return true;
+  if (!isViewId(view)) return false;
+  if (id === undefined) return true;
+  return view === "customers" && memberExists(id);
+}

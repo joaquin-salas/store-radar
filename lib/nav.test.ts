@@ -5,6 +5,7 @@ import {
   DEFAULT_STORE,
   VIEWS,
   VIEW_IDS,
+  isKnownPage,
   isScope,
   parseNavPath,
   scopeForView,
@@ -42,5 +43,25 @@ describe("nav", () => {
     expect(viewHref("mad-granvia", "live")).toBe("/mad-granvia/live");
     expect(scopeLabel(ALL_STORES)).toBe("All stores");
     expect(scopeLabel("mad-granvia")).toBe("Madrid Gran Vía");
+  });
+});
+
+describe("isKnownPage", () => {
+  const member = (id: string) => id === "C00042";
+  it("accepts scopes, views and existing member profiles", () => {
+    for (const path of ["/", "/all", "/mad-granvia/live", "/all/analytics", "/all/customers/C00042"]) {
+      expect(isKnownPage(path, member)).toBe(true);
+    }
+  });
+  it("rejects unknown stores, views, members and extra segments", () => {
+    for (const path of [
+      "/xyz/live",
+      "/mad-granvia/nope",
+      "/all/customers/C99999",
+      "/mad-granvia/live/extra",
+      "/all/customers/C00042/more",
+    ]) {
+      expect(isKnownPage(path, member)).toBe(false);
+    }
   });
 });
