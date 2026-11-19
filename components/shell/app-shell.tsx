@@ -1,7 +1,6 @@
 "use client";
 
 import { Suspense } from "react";
-import { type LayoutStorage, useDefaultLayout } from "react-resizable-panels";
 import { AssistantProvider, useAssistant } from "@/components/assistant/assistant-context";
 import { AssistantPanel } from "@/components/assistant/assistant-panel";
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
@@ -9,7 +8,7 @@ import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { AppHeader, AppHeaderFallback } from "./app-header";
 
 /**
- * App frame: header on top; below it the assistant (left) and the page (right).
+ * App frame: header on top; below it the page (left) and the assistant (right).
  * Lives in the root layout, so the assistant keeps its state across navigation.
  */
 export function AppShell({ children }: { children: React.ReactNode }) {
@@ -28,61 +27,17 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
 const GROUP_ID = "store-radar-workspace";
 
-// Remembered assistant width. Only the layout with the assistant is stored: it renders
-// after hydration, while the page-only layout must match the server (nothing stored).
-// Wrapped because storage can be missing (server) or blocked.
-const withAssistant = (key: string) => key.includes("assistant");
-const layoutStorage: LayoutStorage = {
-  getItem: (key) => {
-    try {
-      return withAssistant(key) ? localStorage.getItem(key) : null;
-    } catch {
-      return null;
-    }
-  },
-  setItem: (key, value) => {
-    try {
-      if (withAssistant(key)) localStorage.setItem(key, value);
-    } catch {
-      // Not remembered this time.
-    }
-  },
-};
+/** The assistant opens at a third of the width: it's a main feature, not a side note. */
+const ASSISTANT_SIZE = { default: "33%", min: "320px", max: "50%" } as const;
 
 function Workspace({ children }: { children: React.ReactNode }) {
   const { open, setOpen, docked } = useAssistant();
   const showDocked = docked && open;
-  const { defaultLayout, onLayoutChanged } = useDefaultLayout({
-    id: GROUP_ID,
-    panelIds: showDocked ? ["assistant", "page"] : ["page"],
-    storage: layoutStorage,
-  });
   const close = () => setOpen(false);
 
   return (
     <>
-      <ResizablePanelGroup
-        id={GROUP_ID}
-        orientation="horizontal"
-        defaultLayout={defaultLayout}
-        onLayoutChanged={onLayoutChanged}
-        className="min-h-0 flex-1"
-      >
-        {/* Fixed child positions keep the page mounted when the assistant opens or closes. */}
-        {showDocked && (
-          <ResizablePanel
-            id="assistant"
-            defaultSize="380px"
-            minSize="320px"
-            maxSize="40%"
-            groupResizeBehavior="preserve-pixel-size"
-          >
-            <Suspense>
-              <AssistantPanel onClose={close} />
-            </Suspense>
-          </ResizablePanel>
-        )}
-        {showDocked && <ResizableHandle withHandle aria-label="Resize assistant" />}
+      <ResizablePanelGroup id={GROUP_ID} orientation="horizontal" className="min-h-0 flex-1">
         <ResizablePanel id="page" minSize="50%">
           <main className="h-full overflow-y-auto">
             {/* Pages size themselves to this container, not the window, so they adapt when the assistant is open. */}
@@ -92,14 +47,28 @@ function Workspace({ children }: { children: React.ReactNode }) {
             </footer>
           </main>
         </ResizablePanel>
+        {/* The page stays the first child, so it stays mounted when the assistant opens or closes. */}
+        {showDocked && <ResizableHandle withHandle aria-label="Resize assistant" />}
+        {showDocked && (
+          <ResizablePanel
+            id="assistant"
+            defaultSize={ASSISTANT_SIZE.default}
+            minSize={ASSISTANT_SIZE.min}
+            maxSize={ASSISTANT_SIZE.max}
+          >
+            <Suspense>
+              <AssistantPanel onClose={close} />
+            </Suspense>
+          </ResizablePanel>
+        )}
       </ResizablePanelGroup>
 
       {!docked && (
         <Sheet open={open} onOpenChange={setOpen}>
           <SheetContent
-            side="left"
+            side="right"
             showCloseButton={false}
-            className="gap-0 p-0 data-[side=left]:w-[min(24rem,90vw)] data-[side=left]:sm:max-w-none"
+            className="gap-0 p-0 data-[side=right]:w-[min(24rem,90vw)] data-[side=right]:sm:max-w-none"
           >
             <SheetTitle className="sr-only">Assistant</SheetTitle>
             <Suspense>

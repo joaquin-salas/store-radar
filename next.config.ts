@@ -7,8 +7,8 @@ const nextConfig: NextConfig = {
   partialPrefetching: true,
   // Don't let `next dev` generate AGENTS.md: its guidance lives in CLAUDE.md.
   agentRules: false,
-  // Bottom-left is where the assistant's message box sits.
-  devIndicators: { position: "bottom-right" },
+  // Bottom-right is where the assistant's message box sits.
+  devIndicators: { position: "bottom-left" },
   turbopack: {
     rules: {
       "*.css": {

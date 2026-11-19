@@ -22,7 +22,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
       <QueryClientProvider client={queryClient}>
         <TooltipProvider>{children}</TooltipProvider>
-        <ReactQueryDevtools buttonPosition="bottom-right" />
+        <ReactQueryDevtools buttonPosition="bottom-left" />
       </QueryClientProvider>
     </ThemeProvider>
   );
