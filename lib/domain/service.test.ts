@@ -7,6 +7,7 @@ import {
   getCustomersPage,
   getOverview,
   getTraffic,
+  getWeekdayHours,
   getVisit,
   getVisitStats,
   getVisitsPage,
@@ -72,6 +73,25 @@ describe("series", () => {
     const week = getTraffic({ store: "all", range: { preset: "7d" } }, NOW);
     expect(week.granularity).toBe("day");
     expect(week.points).toHaveLength(7);
+    // Each day sits next to the same position a week earlier.
+    expect(week.points[0].previousDate).toBe(week.previousRange.from);
+    expect(week.points.every((p) => p.previous !== null)).toBe(true);
+  });
+
+  it("shows the whole previous day next to today so far", () => {
+    const today = getTraffic({ store: "mad-granvia", range: { preset: "today" } }, NOW).points;
+    expect(today.some((p) => p.visitors === null && p.previous !== null)).toBe(true);
+    expect(today.filter((p) => p.visitors !== null).at(-1)!.hour).toBe(NOW.hour);
+  });
+
+  it("builds a weekday x hour pattern over the range", () => {
+    const h = getWeekdayHours({ store: "all", range: { preset: "30d" } }, NOW);
+    expect(h.rows).toHaveLength(7);
+    expect(h.rows.every((r) => r.dates >= 4)).toBe(true);
+    const sat = h.rows[5].values.filter((v) => v !== null) as number[];
+    const tue = h.rows[1].values.filter((v) => v !== null) as number[];
+    // Saturdays are busier than Tuesdays.
+    expect(Math.max(...sat)).toBeGreaterThan(Math.max(...tue));
   });
 
   it("lists only zones the store has", () => {

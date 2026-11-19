@@ -8,7 +8,16 @@ import { getDayStatus } from "./status";
 import { getDayVisits } from "./generator";
 import { type Page, paginate } from "./page";
 import { type StoreScope, loadSummaries, storeIds } from "./summaries";
-import { type Granularity, computeKpis, funnel, hourProfile, trafficSeries, zoneStats } from "./metrics";
+import {
+  type Granularity,
+  compareTraffic,
+  computeKpis,
+  funnel,
+  hourProfile,
+  trafficSeries,
+  weekdayHours,
+  zoneStats,
+} from "./metrics";
 import { type DateRange, isLiveRange as isLive, previousRange, rangeDays, resolveRange } from "./range";
 import { crossStore, flowKpis, journey, mergeRoutes, topRoutes, zoneMatrix } from "./flow-stats";
 import {
@@ -65,15 +74,32 @@ export function getOverview(q: ScopedQuery, now: LocalDateTime = localNow()) {
   };
 }
 
+/**
+ * Street vs. visitors over time, each point next to the same hour or day of
+ * the previous period. The previous period is shown in full, so a live day
+ * has the whole of yesterday's curve to run against.
+ */
 export function getTraffic(q: ScopedQuery & { granularity?: Granularity }, now: LocalDateTime = localNow()) {
   const range = resolveRange(q.range, now);
+  const prev = previousRange(range);
   const granularity = q.granularity ?? (range.from === range.to ? "hour" : "day");
   return {
     store: q.store,
     range,
+    previousRange: prev,
     granularity,
-    points: trafficSeries(loadSummaries(q.store, range, now), granularity),
+    points: compareTraffic(
+      trafficSeries(loadSummaries(q.store, range, now), granularity),
+      trafficSeries(loadSummaries(q.store, prev, now), granularity),
+      { granularity, range, previousRange: prev, today: now.date },
+    ),
   };
+}
+
+/** Average visitors by weekday × hour over the range (when the stores are busy). */
+export function getWeekdayHours(q: ScopedQuery, now: LocalDateTime = localNow()) {
+  const range = resolveRange(q.range, now);
+  return { store: q.store, range, ...weekdayHours(loadSummaries(q.store, range, now)) };
 }
 
 /** Zones any store in the scope has, in walking order. */
