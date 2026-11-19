@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { heatStyle } from "@/components/dashboard/heat";
-import { Button } from "@/components/ui/button";
 import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { SegmentedControl } from "@/components/ui/segmented-control";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { MatrixEnd } from "@/lib/domain/flow-stats";
 import { formatInt, formatPercent } from "@/lib/format";
@@ -26,19 +26,15 @@ export function ZoneMoves({ flows }: { flows: Flows | undefined }) {
             : "Every move, from the row zone to the column zone, entering and leaving included."}
         </CardDescription>
         <CardAction>
-          <div role="group" aria-label="View as" className="flex gap-1">
-            {(["chord", "matrix"] as const).map((m) => (
-              <Button
-                key={m}
-                size="sm"
-                variant={mode === m ? "secondary" : "ghost"}
-                aria-pressed={mode === m}
-                onClick={() => setMode(m)}
-              >
-                {m === "chord" ? "Chord" : "Matrix"}
-              </Button>
-            ))}
-          </div>
+          <SegmentedControl
+            label="View as"
+            value={mode}
+            options={[
+              { value: "chord", label: "Chord" },
+              { value: "matrix", label: "Matrix" },
+            ]}
+            onChange={setMode}
+          />
         </CardAction>
       </CardHeader>
       <CardContent>

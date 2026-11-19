@@ -1,6 +1,7 @@
 "use client";
 
-import { ArrowUp, Sparkles, X } from "lucide-react";
+import { ArrowUp, X } from "lucide-react";
+import { Mark } from "@/components/brand/logo";
 import { useNavState } from "@/components/shell/nav-state";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -38,10 +39,7 @@ export function AssistantPanel({ onClose }: { onClose: () => void }) {
       className="bg-sidebar text-sidebar-foreground flex h-full flex-col"
     >
       <div className="flex h-12 shrink-0 items-center gap-2 border-b px-3">
-        <span className="flex size-6 items-center justify-center rounded-md text-white [background:var(--brand-gradient)]">
-          <Sparkles className="size-3.5" aria-hidden />
-        </span>
-        <h2 id="assistant-title" className="text-sm font-semibold">
+        <h2 id="assistant-title" className="text-[15px] font-semibold">
           Assistant
         </h2>
         <Badge variant="outline">Coming soon</Badge>
@@ -58,10 +56,8 @@ export function AssistantPanel({ onClose }: { onClose: () => void }) {
 
       <div className="flex min-h-0 flex-1 flex-col overflow-y-auto p-4">
         <div className="my-auto flex flex-col items-center gap-3 py-6 text-center">
-          <span className="flex size-12 items-center justify-center rounded-2xl text-white [background:var(--brand-gradient)]">
-            <Sparkles className="size-6" aria-hidden />
-          </span>
-          <h3 className="text-base font-semibold">Ask about {where}</h3>
+          <Mark className="text-foreground size-12" />
+          <h3 className="font-wide text-lg font-bold">Ask about {where}</h3>
           <p className="text-muted-foreground max-w-72 text-sm text-balance">
             Ask a question and get the answer as a chart or table, from the same data as the dashboard. Links
             in answers will open the right view next to this chat.
@@ -69,10 +65,15 @@ export function AssistantPanel({ onClose }: { onClose: () => void }) {
         </div>
 
         <div className="flex flex-col gap-2">
-          <p className="text-muted-foreground text-xs font-medium">Try asking · {view.label}</p>
+          <p className="text-muted-foreground text-[11px] font-semibold tracking-[0.08em] uppercase">
+            Try asking · {view.label}
+          </p>
           <ul className="flex flex-col gap-1.5">
             {SUGGESTIONS[nav.view].map((q) => (
-              <li key={q} className="bg-card text-muted-foreground rounded-lg border px-3 py-2 text-sm">
+              <li
+                key={q}
+                className="bg-card text-foreground border-line-control rounded-md border px-3 py-2 text-[13px] font-medium"
+              >
                 {q}
               </li>
             ))}
@@ -81,13 +82,13 @@ export function AssistantPanel({ onClose }: { onClose: () => void }) {
       </div>
 
       <form className="shrink-0 border-t p-3" onSubmit={(e) => e.preventDefault()}>
-        <div className="bg-card flex items-end gap-2 rounded-xl border p-2">
+        <div className="bg-card border-line-control flex items-end gap-2 rounded-md border p-2">
           <textarea
             disabled
             rows={2}
             aria-label="Message"
             placeholder={`Ask about ${where}…`}
-            className="placeholder:text-muted-foreground min-w-0 flex-1 resize-none bg-transparent px-1 text-sm outline-none disabled:cursor-not-allowed"
+            className="placeholder:text-ink-faint min-w-0 flex-1 resize-none bg-transparent px-1 text-sm outline-none disabled:cursor-not-allowed"
           />
           <Button type="submit" size="icon-sm" disabled aria-label="Send">
             <ArrowUp aria-hidden />

@@ -2,24 +2,24 @@
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { DateField } from "./date-field";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectSeparator,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { SegmentedControl } from "@/components/ui/segmented-control";
 import type { DateRange } from "@/lib/domain/range";
-import { MAX_RANGE_DAYS, RANGE_PRESETS, type RangeInput } from "@/lib/domain/schemas";
+import { MAX_RANGE_DAYS, RANGE_PRESETS, type RangePreset, type RangeInput } from "@/lib/domain/schemas";
 import { addDays, diffDays, localNow } from "@/lib/domain/time";
-import { PRESET_LABELS, withRange } from "@/lib/range-params";
+import { withRange } from "@/lib/range-params";
 
-const CUSTOM = "custom";
-const items = [
-  ...RANGE_PRESETS.map((p) => ({ value: p, label: PRESET_LABELS[p] })),
-  { value: CUSTOM, label: "Custom range" },
-];
+const CUSTOM = "custom" as const;
+type Choice = RangePreset | typeof CUSTOM;
+
+/** Short labels: the segments sit in one row. */
+const SHORT: Record<Choice, string> = {
+  today: "Today",
+  yesterday: "Yesterday",
+  "7d": "7 days",
+  "30d": "30 days",
+  custom: "Custom",
+};
+const options = ([...RANGE_PRESETS, CUSTOM] as Choice[]).map((value) => ({ value, label: SHORT[value] }));
 
 /**
  * Date range filter, stored in the URL. A preset, or a custom range picked with
@@ -49,32 +49,15 @@ export function RangePicker({ range, resolved }: { range: RangeInput; resolved: 
 
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <Select
-        items={items}
+      <SegmentedControl<Choice>
+        label="Date range"
         value={isCustom ? CUSTOM : (range.preset ?? RANGE_PRESETS[0])}
-        onValueChange={(value) => {
-          if (!value) return;
+        options={options}
+        onChange={(value) =>
           // Custom starts from the dates currently shown.
-          go(
-            value === CUSTOM
-              ? { from: resolved.from, to: resolved.to }
-              : { preset: value as RangeInput["preset"] },
-          );
-        }}
-      >
-        <SelectTrigger className="w-40" aria-label="Date range">
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent alignItemWithTrigger={false} align="start">
-          {RANGE_PRESETS.map((p) => (
-            <SelectItem key={p} value={p}>
-              {PRESET_LABELS[p]}
-            </SelectItem>
-          ))}
-          <SelectSeparator />
-          <SelectItem value={CUSTOM}>Custom range</SelectItem>
-        </SelectContent>
-      </Select>
+          go(value === CUSTOM ? { from: resolved.from, to: resolved.to } : { preset: value })
+        }
+      />
       {isCustom && (
         <div className="flex items-center gap-1.5">
           <DateField label="From" value={resolved.from} max={today} onCommit={setFrom} />

@@ -65,10 +65,10 @@ export function LayerToggles({
   onToggle: (id: PlanLayer) => void;
 }) {
   const swatch: Record<PlanLayer, string> = {
-    occupancy: "bg-[linear-gradient(90deg,var(--heat-1),var(--heat-5))] rounded-[3px]",
+    occupancy: "bg-[linear-gradient(90deg,var(--plan-heat-1),var(--plan-heat-5))] rounded-xs",
     people: "bg-[var(--plan-person)] rounded-full",
     sensors: "bg-status-good rounded-full",
-    flows: "bg-highlight rounded-[3px]",
+    flows: "bg-highlight rounded-xs",
   };
   return (
     <div className="flex flex-wrap gap-1.5" role="group" aria-label="Floor plan layers">
@@ -79,9 +79,11 @@ export function LayerToggles({
           aria-pressed={layers[id]}
           onClick={() => onToggle(id)}
           className={cn(
-            "text-muted-foreground inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs transition-colors",
-            "hover:bg-accent focus-visible:ring-ring/50 outline-none focus-visible:ring-3",
-            layers[id] && "border-primary/40 bg-primary/10 text-foreground",
+            "inline-flex h-7 items-center gap-1.5 rounded-md border px-2.5 text-xs font-medium transition-colors",
+            "focus-visible:outline-ring outline-none focus-visible:outline-2 focus-visible:outline-offset-2",
+            layers[id]
+              ? "border-line-control bg-muted text-foreground"
+              : "text-muted-foreground hover:text-foreground border-border hover:bg-muted",
           )}
         >
           <span className={cn("size-2.5", swatch[id], !layers[id] && "opacity-50")} aria-hidden />
@@ -293,7 +295,7 @@ export function FloorPlan({
             >
               <polygon
                 points={toSvgPoints(z.polygon)}
-                fill={layers.occupancy ? `var(--heat-${stepOf(z)})` : "var(--plan-zone-neutral)"}
+                fill={layers.occupancy ? `var(--plan-heat-${stepOf(z)})` : "var(--plan-zone-neutral)"}
                 stroke="var(--background)"
                 strokeWidth={0.18}
                 className="transition-[fill] duration-700"
@@ -873,7 +875,7 @@ export function PlanLegend({ plan, layers }: { plan: Plan; layers: Record<PlanLa
                 <span
                   key={i}
                   className="h-2.5 w-4 rounded-[2px]"
-                  style={{ background: `var(--heat-${i})` }}
+                  style={{ background: `var(--plan-heat-${i})` }}
                 />
               ))}
             </span>

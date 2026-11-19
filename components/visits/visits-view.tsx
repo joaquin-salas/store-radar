@@ -4,6 +4,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { DateField } from "@/components/filters/date-field";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { SegmentedControl } from "@/components/ui/segmented-control";
 import type { FloorPlan } from "@/lib/domain/layout";
 import { VISIT_SEGMENTS } from "@/lib/domain/schemas";
 import { localNow } from "@/lib/domain/time";
@@ -73,27 +74,16 @@ export function VisitsView({
           {formatDateRange(date, date)}
           {data ? ` · ${data.total.toLocaleString("en-GB")} visits` : ""}
         </span>
-        {isToday && (
-          <Badge variant="secondary" className="gap-1.5">
-            <span className="bg-status-good size-1.5 animate-pulse rounded-full" aria-hidden />
-            Live
-          </Badge>
-        )}
+        {isToday && <Badge variant="live">Live</Badge>}
       </div>
 
-      <div role="group" aria-label="Show" className="flex flex-wrap gap-1.5">
-        {VISIT_SEGMENTS.map((s) => (
-          <Button
-            key={s}
-            size="sm"
-            variant={params.segment === s ? "secondary" : "ghost"}
-            aria-pressed={params.segment === s}
-            onClick={() => update({ segment: s })}
-          >
-            {SEGMENT_LABELS[s]}
-          </Button>
-        ))}
-      </div>
+      <SegmentedControl
+        label="Show"
+        value={params.segment}
+        options={VISIT_SEGMENTS.map((s) => ({ value: s, label: SEGMENT_LABELS[s] }))}
+        onChange={(segment) => update({ segment })}
+        className="self-start"
+      />
 
       <div className="grid gap-4 @3xl:grid-cols-2">
         <DurationChart stats={stats} />

@@ -154,8 +154,9 @@ export function CustomersView({ scope }: { scope: string }) {
                 aria-pressed={selected}
                 onClick={() => update({ segment: selected ? "all" : segment })}
                 className={cn(
-                  "bg-card shadow-card focus-visible:ring-ring/50 flex flex-col gap-1 rounded-xl border p-3 text-left transition-colors outline-none focus-visible:ring-3",
-                  selected ? "border-primary ring-primary/30 ring-2" : "hover:bg-accent/50",
+                  "bg-card shadow-card focus-visible:outline-ring flex flex-col gap-1 rounded-xl border p-3 text-left transition-colors outline-none focus-visible:outline-2 focus-visible:outline-offset-2",
+                  // Selected: the ping tint, like a selected row.
+                  selected ? "border-ping bg-ping-soft" : "hover:bg-muted",
                 )}
               >
                 <span className="flex items-baseline justify-between gap-2">

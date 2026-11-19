@@ -2,9 +2,9 @@
 
 import { useState } from "react";
 import { Bar, CartesianGrid, Cell, ComposedChart, Line, XAxis, YAxis } from "recharts";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { type ChartConfig, ChartContainer, ChartTooltip } from "@/components/ui/chart";
+import { SegmentedControl } from "@/components/ui/segmented-control";
 import { Skeleton } from "@/components/ui/skeleton";
 import { localNow } from "@/lib/domain/time";
 import { formatCompact, formatDateRange, formatHour, formatInt, formatPercent } from "@/lib/format";
@@ -92,19 +92,13 @@ export function TrafficChart({ traffic }: { traffic: Traffic | undefined }) {
       </CardHeader>
       <CardContent className="flex flex-col gap-2">
         {/* In the content rather than the header action, so it wraps under the title on narrow cards. */}
-        <div role="group" aria-label="Measure" className="flex flex-wrap gap-1">
-          {(Object.keys(METRICS) as Metric[]).map((k) => (
-            <Button
-              key={k}
-              size="sm"
-              variant={metric === k ? "secondary" : "ghost"}
-              aria-pressed={metric === k}
-              onClick={() => setMetric(k)}
-            >
-              {METRICS[k].label}
-            </Button>
-          ))}
-        </div>
+        <SegmentedControl
+          label="Measure"
+          value={metric}
+          options={(Object.keys(METRICS) as Metric[]).map((k) => ({ value: k, label: METRICS[k].label }))}
+          onChange={setMetric}
+          className="self-start"
+        />
         {!traffic ? (
           <Skeleton className="h-[280px] w-full rounded-lg" />
         ) : rows.length === 0 ? (

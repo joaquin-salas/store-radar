@@ -38,7 +38,7 @@ export function VisitPlan({ plan, stops }: { plan: FloorPlan; stops: readonly In
         <polygon
           key={z.zone}
           points={toSvgPoints(z.polygon)}
-          fill={visited.has(z.zone) ? "var(--heat-2)" : "var(--plan-zone-neutral)"}
+          fill={visited.has(z.zone) ? "var(--plan-heat-1)" : "var(--plan-zone-neutral)"}
           stroke="var(--background)"
           strokeWidth={0.18}
         />

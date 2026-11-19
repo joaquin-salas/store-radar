@@ -1,12 +1,11 @@
 "use client";
 
-import { Radar, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { ASSISTANT_SHORTCUT, useAssistant } from "@/components/assistant/assistant-context";
+import { Mark, Wordmark } from "@/components/brand/logo";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { CHAIN, STORES } from "@/lib/domain/catalog";
 import { useNavState } from "./nav-state";
 import { StoreSelect } from "./store-select";
 import { ViewSelect, ViewTabs } from "./view-nav";
@@ -19,10 +18,10 @@ export function AppHeader() {
   const nav = useNavState();
 
   return (
-    <header className="bg-background border-b">
-      <div className="flex h-14 items-center gap-3 px-3 sm:px-4">
+    <header className="bg-card border-b">
+      <div className="flex h-[52px] items-center gap-4 px-3 sm:px-4">
         <Brand />
-        <div className="hidden min-w-0 items-center gap-3 lg:flex">
+        <div className="hidden min-w-0 items-center gap-4 self-stretch lg:flex">
           <StoreSelect nav={nav} />
           <ViewTabs nav={nav} />
         </div>
@@ -42,8 +41,8 @@ export function AppHeader() {
 /** Static header shown while the URL-dependent parts load. */
 export function AppHeaderFallback() {
   return (
-    <header className="bg-background border-b">
-      <div className="flex h-14 items-center gap-3 px-3 sm:px-4">
+    <header className="bg-card border-b">
+      <div className="flex h-[52px] items-center gap-4 px-3 sm:px-4">
         <Brand />
       </div>
     </header>
@@ -55,18 +54,11 @@ function Brand() {
     <Link
       href="/"
       aria-label="Store Radar home"
-      className="focus-visible:ring-ring/50 flex shrink-0 items-center gap-2 rounded-lg outline-none focus-visible:ring-3"
+      className="text-foreground focus-visible:outline-ring flex shrink-0 items-center gap-2 rounded-md outline-none focus-visible:outline-2 focus-visible:outline-offset-2"
     >
-      <span className="flex size-8 items-center justify-center rounded-lg text-white [background:var(--brand-gradient)]">
-        <Radar className="size-4" aria-hidden />
-      </span>
-      {/* The name hides between lg and xl, where the tabs need the room. */}
-      <span className="grid leading-tight lg:hidden xl:grid">
-        <span className="text-sm font-semibold">Store Radar</span>
-        <span className="text-muted-foreground text-xs">
-          {CHAIN.name} · {STORES.length} stores
-        </span>
-      </span>
+      <Mark />
+      {/* The wordmark hides between lg and xl, where the tabs need the room. */}
+      <Wordmark className="lg:hidden xl:inline" />
     </Link>
   );
 }
@@ -76,18 +68,11 @@ function AssistantToggle() {
   return (
     <Tooltip>
       <TooltipTrigger
-        render={
-          <Button
-            variant={open ? "secondary" : "ghost"}
-            onClick={toggle}
-            aria-pressed={open}
-            aria-label="Assistant"
-            className="gap-1.5"
-          />
-        }
+        render={<Button variant="outline" onClick={toggle} aria-pressed={open} aria-label="Assistant" />}
       >
-        <Sparkles className="text-primary size-4" aria-hidden />
-        <span className="hidden sm:inline">Ask</span>
+        {/* The one ping dot in the app: Ask starts something live. */}
+        <span className="bg-ping size-1.5 rounded-full" aria-hidden />
+        <span>Ask</span>
       </TooltipTrigger>
       <TooltipContent side="bottom">
         {open ? "Close" : "Open"} assistant · {ASSISTANT_SHORTCUT.label}

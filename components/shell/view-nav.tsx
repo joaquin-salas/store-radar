@@ -1,6 +1,6 @@
 "use client";
 
-import { BarChart3, Footprints, type LucideIcon, Radar, Users, Waypoints } from "lucide-react";
+import { ChartColumn, Footprints, type LucideIcon, Radar, Users, Waypoints } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -10,19 +10,20 @@ import { type NavState, hrefForView as hrefFor } from "./nav-state";
 
 export const VIEW_ICONS: Record<ViewId, LucideIcon> = {
   live: Radar,
-  analytics: BarChart3,
+  analytics: ChartColumn,
   visits: Footprints,
   customers: Users,
   flows: Waypoints,
 };
 
+// Tabs fill the header's height; the active one gets the 2px Ping underline on its bottom edge.
 const tabClass =
-  "flex h-7 items-center gap-1.5 rounded-md px-3 text-sm font-medium whitespace-nowrap transition-colors outline-none focus-visible:ring-3 focus-visible:ring-ring/50 [&_svg]:size-4";
+  "relative flex items-center gap-1.5 px-3 text-[13px] font-medium whitespace-nowrap transition-colors outline-none focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring [&_svg]:size-4";
 
 /** View tabs (desktop). Views not built yet are shown disabled. */
 export function ViewTabs({ nav }: { nav: NavState }) {
   return (
-    <nav aria-label="Views" className="bg-muted flex items-center gap-0.5 rounded-lg p-0.5">
+    <nav aria-label="Views" className="flex items-stretch gap-1 self-stretch">
       {VIEWS.map((v) => {
         const Icon = VIEW_ICONS[v.id];
         const content = (
@@ -39,7 +40,7 @@ export function ViewTabs({ nav }: { nav: NavState }) {
                   <span
                     aria-disabled="true"
                     tabIndex={0}
-                    className={`${tabClass} text-muted-foreground/60 cursor-not-allowed`}
+                    className={`${tabClass} text-muted-foreground cursor-not-allowed opacity-45`}
                   />
                 }
               >
@@ -58,8 +59,8 @@ export function ViewTabs({ nav }: { nav: NavState }) {
             aria-current={active ? "page" : undefined}
             className={`${tabClass} ${
               active
-                ? "bg-card text-foreground shadow-sm"
-                : "text-muted-foreground hover:text-foreground hover:bg-card/60"
+                ? "text-foreground after:bg-ping after:absolute after:inset-x-3 after:-bottom-px after:h-0.5 after:rounded-full"
+                : "text-muted-foreground hover:text-foreground"
             }`}
           >
             {content}

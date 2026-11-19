@@ -241,13 +241,33 @@ length, graceful message when no API key is configured.
 
 ## Theme
 
-Tokens live in `app/globals.css` (light on `:root`, dark on `.dark`, toggled by `next-themes`; default follows the OS).
+The look is the **Pulse** design system, kept as a design-system artifact.
+`app/globals.css` maps its tokens onto shadcn's names (light on
+`:root`, dark on `.dark`, toggled by `next-themes`; default follows the OS).
 
-- **Brand palette** `#f72585 #7209b7 #3a0ca3 #4361ee #4cc9f0`. Primary is `#4361ee` (`#5b7cfa` in dark); the full palette appears only as the brand gradient (logo, AI assistant, empty states).
-- **Chart series** (fixed order): blue `#4361ee`, pink `#f72585`, cyan `#0891b2` (darkened for contrast), purple `#7209b7`; dark-mode steps are separate. Validated for colour-blind separation and ≥3:1 contrast in both modes.
-- **Heatmap**: one-hue blue ramp `--heat-0…5`; labels on the strongest steps use `--heat-ink-high`.
-- **Status** (good / warning / critical) is reserved for state and always paired with an icon and text. Brand pink (`--highlight`) never means "bad".
-- **Cards**: white on a cool tinted background, 1px border, soft shadow (`shadow-card`), 14px radius. **Font**: Geist (tabular figures), Geist Mono for IDs.
+- **Neutrals**: Field grey ground (`--background`), white or near-black
+  surfaces (`--card`), Graphite ink. Primary buttons and the chosen segment are
+  Graphite (`--primary`), not a brand colour.
+- **Ping** (`--ping`, orange) marks only what is live, selected or focused: the
+  active tab underline, the focus ring (`--ring`), the sweep in the mark, the
+  dot on Ask, selected rows (`--ping-soft`). Orange text is `--ping-text`.
+  It never means "bad".
+- **Status** good (teal, off the red–green axis), warning (amber) and critical
+  (crimson), each with a `-soft` fill, mean state only and always come with an
+  icon and text.
+- **Chart series** (fixed order): blue `#0081b1`, orange `#e65719`, violet
+  `#6741ca`, magenta `#d84497` (dark steps separate), plus neutral
+  `--chart-other`. Validated for colour-blind separation and ≥3:1 contrast in
+  both modes. Zones keep one colour everywhere through `--zone-*`.
+- **Heatmap**: one-hue ramp `--heat-0…5` (step 1 clears 2:1 on the card) with
+  `--heat-ink-high` on 4–5; the floor plan's large fills use the lighter
+  `--plan-heat-*`.
+- **Shape**: 1px borders instead of shadows (only popovers get
+  `shadow-popover`), 2–4px corners, `SegmentedControl` for filter rows.
+- **Type**: Archivo for text (its wide cut, `font-wide`, for page heads and
+  the wordmark), JetBrains Mono (`readout`) for numbers people compare.
+- **Logo**: `components/brand/logo.tsx` (`Mark`, `Wordmark`); favicon
+  `app/icon.svg`.
 
 ## Next.js 16 specifics
 

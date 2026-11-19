@@ -73,8 +73,12 @@ Read `docs/ARCHITECTURE.md` before structural changes.
 - Use the tokens in `app/globals.css`; never hard-code colours in components.
 - Chart series colours are validated for colour-blind separation and contrast in
   light and dark. If you change them, re-validate the whole set.
+- The look is the **Pulse** design system (see `docs/ARCHITECTURE.md` › Theme):
+  Graphite primary, one Ping orange (`--ping`) only for live, selected or
+  focused, Archivo + JetBrains Mono (`readout` for numbers), 1px borders, small
+  corners, `SegmentedControl` for filter rows.
 - Status colours (good / warning / critical) mean status only and always come
-  with an icon and text. Brand pink (`--highlight`) never means "bad".
+  with an icon and text. Ping orange never means "bad".
 - Check UI changes in **light and dark**, at **desktop and mobile** width, and
   with the assistant panel **open and closed**.
 - Page layouts use **container queries** (`@3xl:grid-cols-2`), not window

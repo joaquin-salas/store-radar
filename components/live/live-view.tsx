@@ -22,32 +22,29 @@ export function LiveView({ storeId, storeName, plan }: { storeId: string; storeN
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center gap-3">
-        <span className="text-muted-foreground text-sm tabular-nums">
+        <h1 className="font-wide text-[22px] leading-7 font-bold">{storeName}</h1>
+        {live &&
+          (live.openNow ? (
+            <Badge variant="live">Live</Badge>
+          ) : (
+            <Badge variant="outline" className="gap-1.5">
+              <span className="bg-muted-foreground size-1.5 rounded-full" aria-hidden />
+              Closed
+            </Badge>
+          ))}
+        <span className="text-muted-foreground readout text-xs">
           {weekday ?? "Today"}
           {live ? ` · ${pad2(live.asOf.hour)}:${pad2(live.asOf.minute)}` : ""} (store time)
         </span>
-        {live && (
-          <Badge variant={live.openNow ? "secondary" : "outline"} className="gap-1.5">
-            <span
-              className={
-                live.openNow
-                  ? "bg-status-good size-1.5 animate-pulse rounded-full"
-                  : "bg-muted-foreground size-1.5 rounded-full"
-              }
-              aria-hidden
-            />
-            {live.openNow ? "Live" : "Closed"}
-          </Badge>
-        )}
       </div>
 
       <div className="grid gap-4 @4xl:grid-cols-[minmax(0,1fr)_22rem]">
         <Card>
           <CardHeader className="flex flex-wrap items-start justify-between gap-3">
             <div className="flex flex-col gap-1">
-              <CardTitle>{storeName}</CardTitle>
+              <CardTitle>Floor plan</CardTitle>
               <CardDescription>
-                Floor plan · {plan.width} × {plan.depth} m · zones coloured by how full they are right now
+                {plan.width} × {plan.depth} m · zones coloured by how full they are right now
               </CardDescription>
             </div>
             <LayerToggles layers={layers} onToggle={toggle} />

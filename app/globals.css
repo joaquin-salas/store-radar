@@ -7,9 +7,10 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-sans);
+  --font-sans: var(--font-archivo);
+  --font-mono: var(--font-jetbrains-mono);
+  --font-heading: var(--font-archivo);
+  --font-display: var(--font-archivo);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -23,12 +24,29 @@
   --color-chart-3: var(--chart-3);
   --color-chart-2: var(--chart-2);
   --color-chart-1: var(--chart-1);
+  --color-chart-other: var(--chart-other);
+  --color-zone-womenswear: var(--zone-womenswear);
+  --color-zone-menswear: var(--zone-menswear);
+  --color-zone-kids: var(--zone-kids);
+  --color-zone-fitting-rooms: var(--zone-fitting-rooms);
+  --color-ping: var(--ping);
+  --color-ping-text: var(--ping-text);
+  --color-ping-soft: var(--ping-soft);
+  --color-on-ping: var(--on-ping);
+  --color-ink-faint: var(--ink-faint);
+  --color-line-control: var(--line-control);
+  --color-primary-hover: var(--primary-hover);
   --color-status-good: var(--status-good);
+  --color-status-good-soft: var(--status-good-soft);
+  --color-status-warning: var(--status-warning);
+  --color-status-warning-soft: var(--status-warning-soft);
+  --color-status-critical: var(--status-critical);
+  --color-status-critical-soft: var(--status-critical-soft);
+  --color-on-critical: var(--on-critical);
   --color-highlight: var(--highlight);
   --color-heat-ink-high: var(--heat-ink-high);
   --shadow-card: var(--card-shadow);
-  --color-status-warning: var(--status-warning);
-  --color-status-critical: var(--status-critical);
+  --shadow-popover: var(--popover-shadow);
   --color-ring: var(--ring);
   --color-input: var(--input);
   --color-border: var(--border);
@@ -45,152 +63,226 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
-  --radius-sm: calc(var(--radius) * 0.6);
-  --radius-md: calc(var(--radius) * 0.8);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) * 1.4);
-  --radius-2xl: calc(var(--radius) * 1.8);
-  --radius-3xl: calc(var(--radius) * 2.2);
-  --radius-4xl: calc(var(--radius) * 2.6);
+  /* Pulse corners stay small: 2px marks, 3px controls, 4px cards and menus. */
+  --radius-xs: 2px;
+  --radius-sm: 2px;
+  --radius-md: 3px;
+  --radius-lg: 4px;
+  --radius-xl: 4px;
+  --radius-2xl: 6px;
+  --radius-3xl: 8px;
+  --radius-4xl: 10px;
 }
 
 /*
- * Store Radar theme. Brand palette: #f72585 #7209b7 #3a0ca3 #4361ee #4cc9f0.
- * Chart series are validated for colour-blind separation and contrast (light
- * and dark); indigo and light cyan appear only in the brand gradient.
- * Status colours mean status only and always ship with an icon + text.
+ * Store Radar theme: the "Pulse" design system (Graphite and Field grey,
+ * one Ping orange signal, Archivo + JetBrains Mono). Source of truth:
+ * the Store Radar design system artifact (tokens.json); names here map
+ * those tokens onto shadcn's.
+ *
+ * - Ping (--ping) marks only what is live, selected or focused. Never "bad".
+ * - Status colours mean status only and always ship with an icon + text.
+ *   Good is teal, so it never relies on red versus green.
+ * - Chart series 1–4 are validated for colour-blind separation and 3:1
+ *   contrast in light and dark; --chart-other is neutral. Zones keep their
+ *   colour everywhere through --zone-*.
  */
 :root {
-  --background: #f6f6fb;
-  --foreground: #14121f;
+  --background: #f1f4f3;
+  --foreground: #0f1918;
   --card: #ffffff;
-  --card-foreground: #14121f;
+  --card-foreground: #0f1918;
   --popover: #ffffff;
-  --popover-foreground: #14121f;
-  --primary: #4361ee;
+  --popover-foreground: #0f1918;
+  --primary: #0f1918;
+  --primary-hover: #2b3836;
   --primary-foreground: #ffffff;
-  --secondary: #efeef6;
-  --secondary-foreground: #14121f;
-  --muted: #efeef6;
-  --muted-foreground: #6b6880;
-  --accent: #eef0fd;
-  --accent-foreground: #14121f;
-  --destructive: #d03b3b;
-  --border: #e7e6f0;
-  --input: #e2e1ec;
-  --ring: #4361ee;
-  --card-shadow: 0 1px 2px rgb(20 18 31 / 0.04), 0 4px 14px rgb(20 18 31 / 0.05);
-  --brand-gradient: linear-gradient(135deg, #7209b7, #3a0ca3 35%, #4361ee 65%, #4cc9f0);
-  /* Highlight: brand pink. Never means "bad" — that's --status-critical. */
-  --highlight: #f72585;
-  /* Chart series, fixed order: blue, pink, cyan (darkened), purple. 5 = neutral "other". */
-  --chart-1: #4361ee;
-  --chart-2: #f72585;
-  --chart-3: #0891b2;
-  --chart-4: #7209b7;
-  --chart-5: #8a879c;
-  /* Heatmap: one hue from the primary, empty → full. Ink for labels on the dark steps. */
-  --heat-0: #eef1fd;
-  --heat-1: #c7d2fb;
-  --heat-2: #9aaef7;
-  --heat-3: #6d89f2;
-  --heat-4: #4361ee;
-  --heat-5: #22339a;
+  --secondary: #e6ecea;
+  --secondary-foreground: #0f1918;
+  --muted: #e6ecea;
+  --muted-foreground: #56635f;
+  --ink-faint: #76837f;
+  --accent: #e6ecea;
+  --accent-foreground: #0f1918;
+  --destructive: #c0263d;
+  --on-critical: #ffffff;
+  --border: #d8dfdd;
+  --input: #7f8b88;
+  --line-control: #7f8b88;
+  --ring: #e65719;
+  --scrim: rgb(15 25 24 / 0.45);
+  --card-shadow: none;
+  --popover-shadow: 0 8px 24px -8px rgb(15 25 24 / 0.22), 0 1px 2px rgb(15 25 24 / 0.08);
+  --ping: #e65719;
+  --ping-text: #b4400b;
+  --ping-soft: #fce7dd;
+  --on-ping: #0f1918;
+  --highlight: var(--ping);
+  --chart-1: #0081b1;
+  --chart-2: #e65719;
+  --chart-3: #6741ca;
+  --chart-4: #d84497;
+  --chart-other: #76837f;
+  --chart-5: var(--chart-other);
+  --zone-womenswear: var(--chart-1);
+  --zone-menswear: var(--chart-2);
+  --zone-kids: var(--chart-3);
+  --zone-fitting-rooms: var(--chart-4);
+  /* Heatmap: one hue (chart-1's), empty → full. Ink for labels on steps 4–5. */
+  --heat-0: #e5f1f7;
+  --heat-1: #7cbbdb;
+  --heat-2: #3e9dca;
+  --heat-3: #007fae;
+  --heat-4: #00618a;
+  --heat-5: #004464;
   --heat-ink-high: #ffffff;
-  /* Floor plan (SVG) */
-  --plan-street: #ebeaf3;
-  --plan-wall: #14121f;
-  --plan-glass: #4361ee;
-  --plan-staff: #e9e8f1;
-  --plan-zone-neutral: #f1f0f7;
+  /* Floor plan (SVG). Its occupancy ramp starts lighter than --heat-*: big
+     filled areas don't need the 2:1 floor small chart marks do. */
+  --plan-heat-0: var(--heat-0);
+  --plan-heat-1: #c3e0ee;
+  --plan-heat-2: #7cbbdb;
+  --plan-heat-3: #3e9dca;
+  --plan-heat-4: #007fae;
+  --plan-heat-5: #00618a;
+  --plan-street: #e6ecea;
+  --plan-wall: #0f1918;
+  --plan-glass: #0081b1;
+  --plan-staff: #e3e9e7;
+  --plan-zone-neutral: #eef2f1;
   --plan-fixture: #ffffff;
-  --plan-fixture-stroke: rgb(20 18 31 / 0.32);
+  --plan-fixture-stroke: rgb(15 25 24 / 0.32);
   --plan-fixture-on-high: rgb(255 255 255 / 0.2);
   --plan-fixture-stroke-on-high: rgb(255 255 255 / 0.6);
-  --plan-person: rgb(20 18 31 / 0.7);
+  --plan-person: rgb(15 25 24 / 0.7);
   --plan-person-on-high: rgb(255 255 255 / 0.9);
   --plan-pill: rgb(255 255 255 / 0.92);
-  --status-good: #0ca30c;
-  --status-warning: #fab219;
-  --status-critical: #d03b3b;
-  --radius: 0.625rem;
+  --status-good: #0e7166;
+  --status-good-soft: #d9f1ee;
+  --status-warning: #8f5e00;
+  --status-warning-soft: #f7ebcf;
+  --status-critical: #c0263d;
+  --status-critical-soft: #f9dee2;
+  --radius: 0.25rem;
+  /* The assistant panel surface. */
   --sidebar: #ffffff;
-  --sidebar-foreground: #14121f;
-  --sidebar-primary: #4361ee;
+  --sidebar-foreground: #0f1918;
+  --sidebar-primary: #0f1918;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #eef0fd;
-  --sidebar-accent-foreground: #2a3fb8;
-  --sidebar-border: #e7e6f0;
-  --sidebar-ring: #4361ee;
+  --sidebar-accent: #e6ecea;
+  --sidebar-accent-foreground: #0f1918;
+  --sidebar-border: #d8dfdd;
+  --sidebar-ring: #e65719;
 }
 
 .dark {
-  --background: #0f0d1a;
-  --foreground: #f1f0f7;
-  --card: #17142a;
-  --card-foreground: #f1f0f7;
-  --popover: #1b1830;
-  --popover-foreground: #f1f0f7;
-  --primary: #5b7cfa;
-  --primary-foreground: #ffffff;
-  --secondary: #221e38;
-  --secondary-foreground: #f1f0f7;
-  --muted: #221e38;
-  --muted-foreground: #a19db8;
-  --accent: #262245;
-  --accent-foreground: #f1f0f7;
-  --destructive: #e66767;
-  --border: #2a2640;
-  --input: #332e4d;
-  --ring: #5b7cfa;
-  --card-shadow: 0 1px 2px rgb(0 0 0 / 0.35);
-  --highlight: #f72585;
-  --chart-1: #5b7cfa;
-  --chart-2: #f72585;
-  --chart-3: #1aa3cc;
-  --chart-4: #9a5cf0;
-  --chart-5: #8a879c;
+  --background: #0d1414;
+  --foreground: #e6edeb;
+  --card: #151c1d;
+  --card-foreground: #e6edeb;
+  --popover: #1c2625;
+  --popover-foreground: #e6edeb;
+  --primary: #e6edeb;
+  --primary-hover: #c8d2cf;
+  --primary-foreground: #0d1414;
+  --secondary: #1a2322;
+  --secondary-foreground: #e6edeb;
+  --muted: #1a2322;
+  --muted-foreground: #94a39f;
+  --ink-faint: #6e7d79;
+  --accent: #1a2322;
+  --accent-foreground: #e6edeb;
+  --destructive: #ff7a8a;
+  --on-critical: #1a0a0e;
+  --border: #263130;
+  --input: #62706c;
+  --line-control: #62706c;
+  --ring: #f26a2e;
+  --scrim: rgb(0 0 0 / 0.6);
+  --card-shadow: none;
+  --popover-shadow: 0 10px 28px -8px rgb(0 0 0 / 0.6), 0 1px 2px rgb(0 0 0 / 0.4);
+  --ping: #f26a2e;
+  --ping-text: #ff8a57;
+  --ping-soft: #3a1e12;
+  --on-ping: #0d1414;
+  --chart-1: #259cca;
+  --chart-2: #e56731;
+  --chart-3: #8568db;
+  --chart-4: #e05b9e;
+  --chart-other: #6e7d79;
   /* Dark ramp runs dark → light so "full" stands out against the dark surface. */
-  --heat-0: #1b1932;
-  --heat-1: #222a5c;
-  --heat-2: #283a8a;
-  --heat-3: #3150c0;
-  --heat-4: #5b7cfa;
-  --heat-5: #9aaef7;
-  --heat-ink-high: #0f0d1a;
-  --plan-street: #17142a;
-  --plan-wall: #cfd0e6;
-  --plan-glass: #5b7cfa;
-  --plan-staff: #1b1830;
-  --plan-zone-neutral: #1b1932;
+  --heat-0: #162127;
+  --heat-1: #1a5d7a;
+  --heat-2: #227ba2;
+  --heat-3: #469ac2;
+  --heat-4: #70b8dd;
+  --heat-5: #a0d7f4;
+  --heat-ink-high: #0d1414;
+  --plan-heat-0: var(--heat-0);
+  --plan-heat-1: #173a4a;
+  --plan-heat-2: #1a5d7a;
+  --plan-heat-3: #227ba2;
+  --plan-heat-4: #469ac2;
+  --plan-heat-5: #70b8dd;
+  --plan-street: #151c1d;
+  --plan-wall: #c8d2cf;
+  --plan-glass: #259cca;
+  --plan-staff: #1a2322;
+  --plan-zone-neutral: #182120;
   --plan-fixture: rgb(255 255 255 / 0.07);
   --plan-fixture-stroke: rgb(255 255 255 / 0.32);
-  --plan-fixture-on-high: rgb(15 13 26 / 0.18);
-  --plan-fixture-stroke-on-high: rgb(15 13 26 / 0.55);
-  --plan-person: rgb(241 240 247 / 0.85);
-  --plan-person-on-high: rgb(15 13 26 / 0.85);
-  --plan-pill: rgb(23 20 42 / 0.92);
-  --status-good: #0ca30c;
-  --status-warning: #fab219;
-  --status-critical: #d03b3b;
-  --sidebar: #12101f;
-  --sidebar-foreground: #f1f0f7;
-  --sidebar-primary: #5b7cfa;
-  --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #221e38;
-  --sidebar-accent-foreground: #f1f0f7;
-  --sidebar-border: #2a2640;
-  --sidebar-ring: #5b7cfa;
+  --plan-fixture-on-high: rgb(13 20 20 / 0.18);
+  --plan-fixture-stroke-on-high: rgb(13 20 20 / 0.55);
+  --plan-person: rgb(230 237 235 / 0.85);
+  --plan-person-on-high: rgb(13 20 20 / 0.85);
+  --plan-pill: rgb(21 28 29 / 0.92);
+  --status-good: #4fcfbe;
+  --status-good-soft: #0f3330;
+  --status-warning: #f0b44c;
+  --status-warning-soft: #3a2b0d;
+  --status-critical: #ff7a8a;
+  --status-critical-soft: #3d1720;
+  --sidebar: #151c1d;
+  --sidebar-foreground: #e6edeb;
+  --sidebar-primary: #e6edeb;
+  --sidebar-primary-foreground: #0d1414;
+  --sidebar-accent: #1a2322;
+  --sidebar-accent-foreground: #e6edeb;
+  --sidebar-border: #263130;
+  --sidebar-ring: #f26a2e;
 }
 
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    @apply border-border outline-ring;
   }
   body {
     @apply bg-background text-foreground;
   }
   html {
     @apply font-sans;
+  }
+  /* Focus: a solid 2px Ping ring, offset 2px, on everything interactive. */
+  :focus-visible {
+    outline-offset: 2px;
+  }
+}
+
+@layer utilities {
+  /* Mono readouts for numbers people compare: KPI values, deltas, table figures, axes. */
+  .readout {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.01em;
+  }
+  /* Archivo's wide cut for page and section heads and the wordmark. */
+  .font-wide {
+    font-family: var(--font-display);
+    font-stretch: 125%;
+  }
+}
+
+@keyframes sr-sweep {
+  to {
+    transform: translateX(100%);
   }
 }

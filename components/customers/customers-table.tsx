@@ -130,7 +130,7 @@ export function CustomersTable({
                       <button
                         type="button"
                         onClick={header.column.getToggleSortingHandler()}
-                        className="hover:text-foreground focus-visible:ring-ring/50 -mx-1 flex items-center gap-1 rounded px-1 outline-none focus-visible:ring-3"
+                        className="hover:text-foreground focus-visible:outline-ring -mx-1 flex items-center gap-1 rounded px-1 outline-none focus-visible:outline-2 focus-visible:outline-offset-2"
                       >
                         <table.FlexRender header={header} />
                         {sorted === "asc" ? (
@@ -212,7 +212,7 @@ function MemberCell({ member }: { member: CustomerRow }) {
     <span className="flex flex-col">
       <Link
         href={`${pathname}/${member.id}`}
-        className="text-primary focus-visible:ring-ring/50 rounded font-medium underline-offset-2 outline-none hover:underline focus-visible:ring-3"
+        className="text-primary focus-visible:outline-ring rounded font-medium underline-offset-2 outline-none hover:underline focus-visible:outline-2 focus-visible:outline-offset-2"
       >
         {member.name}
       </Link>

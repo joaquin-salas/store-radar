@@ -9,13 +9,13 @@ import type { InStoreZone } from "@/lib/domain/types";
  * the label, never from good/bad colouring).
  */
 const ZONE_COLOR: Partial<Record<InStoreZone, string>> = {
-  womenswear: "var(--chart-1)",
-  menswear: "var(--chart-2)",
-  kids: "var(--chart-3)",
-  "fitting-rooms": "var(--chart-4)",
+  womenswear: "var(--zone-womenswear)",
+  menswear: "var(--zone-menswear)",
+  kids: "var(--zone-kids)",
+  "fitting-rooms": "var(--zone-fitting-rooms)",
 };
 
-export const NEUTRAL = "var(--chart-5)";
+export const NEUTRAL = "var(--chart-other)";
 
 export const zoneColor = (zone: InStoreZone | null) => (zone ? (ZONE_COLOR[zone] ?? NEUTRAL) : NEUTRAL);
 

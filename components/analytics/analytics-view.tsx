@@ -38,12 +38,7 @@ export function AnalyticsView({ scope }: { scope: string }) {
         <span className="text-muted-foreground text-sm tabular-nums">
           {formatDateRange(resolved.from, resolved.to)} · {scopeLabel(scope)}
         </span>
-        {live && (
-          <Badge variant="secondary" className="gap-1.5">
-            <span className="bg-status-good size-1.5 animate-pulse rounded-full" aria-hidden />
-            Live
-          </Badge>
-        )}
+        {live && <Badge variant="live">Live</Badge>}
       </div>
 
       <section className="flex flex-col gap-2" aria-labelledby="analytics-kpis">

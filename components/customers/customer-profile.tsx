@@ -20,7 +20,7 @@ export function CustomerProfileView({ customerId, scope }: { customerId: string;
     <div className="flex flex-col gap-4">
       <Link
         href={back}
-        className="text-muted-foreground hover:text-foreground focus-visible:ring-ring/50 flex w-fit items-center gap-1.5 rounded text-sm outline-none focus-visible:ring-3"
+        className="text-muted-foreground hover:text-foreground focus-visible:outline-ring flex w-fit items-center gap-1.5 rounded text-sm outline-none focus-visible:outline-2 focus-visible:outline-offset-2"
       >
         <ArrowLeft className="size-4" aria-hidden />
         Members of {scope === "all" ? "all stores" : scopeLabel(scope)}
@@ -269,7 +269,7 @@ function RecentVisits({ visits }: { visits: CustomerProfile["recentVisits"] }) {
                   )}
                   <Link
                     href={`/${v.storeId}/visits?date=${v.date}&visit=${v.visitId}`}
-                    className="text-primary focus-visible:ring-ring/50 flex items-center gap-1 rounded underline-offset-2 outline-none hover:underline focus-visible:ring-3"
+                    className="text-primary focus-visible:outline-ring flex items-center gap-1 rounded underline-offset-2 outline-none hover:underline focus-visible:outline-2 focus-visible:outline-offset-2"
                   >
                     Open visit <ExternalLink className="size-3.5" aria-hidden />
                   </Link>

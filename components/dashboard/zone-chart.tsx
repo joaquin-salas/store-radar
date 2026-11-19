@@ -1,6 +1,7 @@
 "use client";
 
-import { Bar, BarChart, XAxis, YAxis } from "recharts";
+import { Bar, BarChart, Cell, XAxis, YAxis } from "recharts";
+import { zoneColor } from "@/components/flows/flow-colors";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { type ChartConfig, ChartContainer, ChartTooltip } from "@/components/ui/chart";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -25,7 +26,9 @@ export function ZoneChart({ params, title = "Zones today" }: { params: ScopePara
     <Card>
       <CardHeader>
         <CardTitle>{title}</CardTitle>
-        <CardDescription>Visitors per zone · label shows share of store visitors</CardDescription>
+        <CardDescription>
+          Visitors per zone · label shows share of store visitors · checkout is neutral
+        </CardDescription>
       </CardHeader>
       <CardContent>
         {isPending ? (
@@ -70,7 +73,12 @@ export function ZoneChart({ params, title = "Zones today" }: { params: ScopePara
                     </text>
                   );
                 }}
-              />
+              >
+                {/* Zones keep their colour everywhere (floor plan, flows, routes). */}
+                {rows.map((z) => (
+                  <Cell key={z.zone} fill={zoneColor(z.zone)} />
+                ))}
+              </Bar>
             </BarChart>
           </ChartContainer>
         )}

@@ -123,8 +123,13 @@ function KpiCard<T>({
   return (
     <Card size="sm">
       <CardHeader>
-        <CardDescription title={kpi.hint}>{kpi.label}</CardDescription>
-        <CardTitle className="text-2xl! font-semibold tabular-nums">{kpi.value(current)}</CardTitle>
+        <CardDescription title={kpi.hint} className="truncate text-xs leading-4">
+          {kpi.label}
+        </CardDescription>
+        {/* Values are mono readouts so figures line up and compare at a glance. */}
+        <CardTitle className="readout text-[26px]! leading-8 font-semibold tracking-[-0.02em]">
+          {kpi.value(current)}
+        </CardTitle>
       </CardHeader>
       <CardContent className="text-muted-foreground text-xs tabular-nums">
         {change === null ? (
@@ -133,7 +138,7 @@ function KpiCard<T>({
           <span className="flex items-center gap-1">
             {/* Direction is shown by icon + sign, not colour alone: more isn't always better. */}
             <ChangeIcon direction={change.direction} />
-            <span className="text-foreground font-medium">{change.text}</span>
+            <span className="readout text-foreground font-semibold">{change.text}</span>
             <span className="truncate">{comparisonLabel}</span>
           </span>
         )}

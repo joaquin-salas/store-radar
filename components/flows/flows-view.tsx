@@ -4,7 +4,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { type KpiDef, KpiCards } from "@/components/dashboard/kpi-row";
 import { RangePicker } from "@/components/filters/range-picker";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { SegmentedControl } from "@/components/ui/segmented-control";
 import type { FlowKpis } from "@/lib/domain/flow-stats";
 import { isLiveRange, previousRange, resolveRange } from "@/lib/domain/range";
 import { FLOW_SEGMENTS, type FlowSegment } from "@/lib/domain/schemas";
@@ -96,27 +96,16 @@ export function FlowsView({ scope }: { scope: string }) {
         <span className="text-muted-foreground text-sm tabular-nums">
           {formatDateRange(resolved.from, resolved.to)} · {scopeLabel(scope)}
         </span>
-        {live && (
-          <Badge variant="secondary" className="gap-1.5">
-            <span className="bg-status-good size-1.5 animate-pulse rounded-full" aria-hidden />
-            Live
-          </Badge>
-        )}
+        {live && <Badge variant="live">Live</Badge>}
       </div>
 
-      <div role="group" aria-label="Visitors" className="flex flex-wrap gap-1.5">
-        {FLOW_SEGMENTS.map((s) => (
-          <Button
-            key={s}
-            size="sm"
-            variant={segment === s ? "secondary" : "ghost"}
-            aria-pressed={segment === s}
-            onClick={() => setSegment(s)}
-          >
-            {SEGMENT_LABELS[s]}
-          </Button>
-        ))}
-      </div>
+      <SegmentedControl
+        label="Visitors"
+        value={segment}
+        options={FLOW_SEGMENTS.map((s) => ({ value: s, label: SEGMENT_LABELS[s] }))}
+        onChange={setSegment}
+        className="self-start"
+      />
 
       {isError && <p className="text-destructive text-sm">Couldn&apos;t load flows.</p>}
 
