@@ -70,6 +70,62 @@ function dwell(rng: ReturnType<typeof createRng>, mean: number): number {
   return Math.max(5, Math.round(mean * (0.35 + rng.next() * rng.next() * 2.6)));
 }
 
+/** Chance of going straight back to the rail after the fitting rooms (another size, another colour). */
+const BACK_AFTER_FITTING = 0.35;
+/** Chance of one last look at an earlier product zone before leaving or paying. */
+const LAST_LOOK = 0.14;
+/** A return to a zone already seen is quicker than the first look. */
+const REVISIT_DWELL = 0.4;
+
+/**
+ * One visitor's walk: entrance, the product zones they pick in an order that
+ * varies (popular zones tend to come first), the fitting rooms right after
+ * browsing apparel, sometimes back to a zone already seen, then checkout or out.
+ */
+function walkStore(
+  rng: ReturnType<typeof createRng>,
+  hasZone: ReadonlySet<InStoreZone>,
+  returning: boolean,
+): { path: ZoneStop[]; checkout: boolean } {
+  const stop = (zone: InStoreZone, factor = 1): ZoneStop => ({
+    zone,
+    dwellSec: dwell(rng, ZONE_BEHAVIOUR[zone].dwellSec * factor),
+  });
+  const path: ZoneStop[] = [stop("entrance")];
+
+  // Which product zones, then a weighted shuffle (Efraimidis–Spirakis keys):
+  // womenswear usually comes first, but not always.
+  const picked = PRODUCT_ZONES.filter((z) => hasZone.has(z) && rng.chance(ZONE_BEHAVIOUR[z].visitProb))
+    .map((zone) => ({ zone, key: rng.next() ** (1 / ZONE_BEHAVIOUR[zone].visitProb) }))
+    .sort((a, b) => b.key - a.key)
+    .map((p) => p.zone);
+
+  const apparel = picked.filter((z) => z !== "kids");
+  // Fitting rooms only make sense after browsing apparel; they follow one of the apparel zones.
+  const tried = apparel.length > 0 && rng.chance(ZONE_BEHAVIOUR["fitting-rooms"].visitProb / 0.7);
+  const triedAfter = tried ? rng.pick(apparel) : null;
+
+  for (const zone of picked) {
+    path.push(stop(zone));
+    if (zone !== triedAfter) continue;
+    path.push(stop("fitting-rooms"));
+    if (rng.chance(BACK_AFTER_FITTING)) path.push(stop(zone, REVISIT_DWELL));
+  }
+
+  // One last look at an earlier zone (not the one just left).
+  if (picked.length >= 2 && rng.chance(LAST_LOOK)) {
+    const last = path.at(-1)!.zone;
+    const options = picked.filter((z) => z !== last);
+    path.push(stop(rng.pick(options), REVISIT_DWELL));
+  }
+
+  // Trying things on strongly increases the chance of reaching the till.
+  const baseCheckout = picked.length === 0 ? 0.03 : tried ? 0.62 : 0.2;
+  const checkout = rng.chance(Math.min(0.9, baseCheckout * (returning ? RETURNING_CHECKOUT_BOOST : 1)));
+  if (checkout) path.push(stop("checkout"));
+  return { path, checkout };
+}
+
 /**
  * Simulates one full store-day. Pure: same inputs, same output.
  * Returns lean visits — use `generateDay` when display fields are needed.
@@ -116,29 +172,7 @@ export function simulateDay(store: Store, date: LocalDate): SimulatedDay {
       const returning = rng.chance(customerId ? REGISTERED_RETURNING_RATE : returningRate);
       const deviceIndex = returning && !customerId ? rng.int(0, store.devicePool - 1) : -1;
 
-      const path: ZoneStop[] = [{ zone: "entrance", dwellSec: dwell(rng, ZONE_BEHAVIOUR.entrance.dwellSec) }];
-
-      let browsedApparel = false;
-      for (const zone of PRODUCT_ZONES) {
-        if (!hasZone.has(zone) || !rng.chance(ZONE_BEHAVIOUR[zone].visitProb)) continue;
-        path.push({ zone, dwellSec: dwell(rng, ZONE_BEHAVIOUR[zone].dwellSec) });
-        if (zone !== "kids") browsedApparel = true;
-      }
-
-      const browsed = path.length > 1;
-      // Fitting rooms only make sense after browsing apparel.
-      const tried = browsedApparel && rng.chance(ZONE_BEHAVIOUR["fitting-rooms"].visitProb / 0.7);
-      if (tried) {
-        path.push({ zone: "fitting-rooms", dwellSec: dwell(rng, ZONE_BEHAVIOUR["fitting-rooms"].dwellSec) });
-      }
-
-      // Trying things on strongly increases the chance of reaching the till.
-      const baseCheckout = !browsed ? 0.03 : tried ? 0.62 : 0.2;
-      const checkout = rng.chance(Math.min(0.9, baseCheckout * (returning ? RETURNING_CHECKOUT_BOOST : 1)));
-      if (checkout) {
-        path.push({ zone: "checkout", dwellSec: dwell(rng, ZONE_BEHAVIOUR.checkout.dwellSec) });
-      }
-
+      const { path, checkout } = walkStore(rng, hasZone, returning);
       let totalDwellSec = 0;
       for (const s of path) totalDwellSec += s.dwellSec;
       visits.push({ enteredSec, path, customerId, checkout, totalDwellSec, returning, deviceIndex });
@@ -233,7 +267,8 @@ export function summarizeDay(
 
     let zones = 0;
     for (const stop of path) {
-      h.zones[stop.zone].visitors++;
+      // A zone counts each visitor once, however many times they go back.
+      if (!(zones & ZONE_BIT[stop.zone])) h.zones[stop.zone].visitors++;
       h.zones[stop.zone].dwellSec += stop.dwellSec;
       zones |= ZONE_BIT[stop.zone];
     }

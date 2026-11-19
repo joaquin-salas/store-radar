@@ -81,10 +81,13 @@ There is no database. All data is generated deterministically:
    every server instance, for every user and for the AI tools.
 2. **Realistic shape.** Street traffic follows an hourly curve (lunch and
    after-work peaks) × weekday factor × noise. Each passer-by walks in with the
-   store's capture rate; each visitor follows a path through zones with
-   zone-specific probabilities and dwell times. Fitting rooms happen only after
-   browsing apparel and strongly raise the chance of reaching checkout. Some
-   stores close on Sundays.
+   store's capture rate; each visitor picks product zones with zone-specific
+   probabilities and walks them in a varying order (popular zones tend to come
+   first, via a weighted shuffle), with zone-specific dwell times. The fitting
+   rooms follow an apparel zone and strongly raise the chance of reaching
+   checkout; afterwards about a third go back to the rail they came from, and
+   some take a last look at an earlier zone before paying or leaving. Checkout,
+   when reached, is the last stop. Some stores close on Sundays.
 3. **Visits are the source of truth.** Daily summaries (hourly buckets per
    zone) are aggregated _from_ the simulated visits, so the visits table,
    the KPIs and the charts always agree.

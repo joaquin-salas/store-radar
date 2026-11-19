@@ -6,6 +6,7 @@ import type { LocalDateTime } from "./time";
 
 const granVia = getStore("mad-granvia")!;
 const barcelona = getStore("bcn-pdg")!;
+const valencia = getStore("vlc-colon")!;
 const NOW: LocalDateTime = { date: "2026-11-18", hour: 16, minute: 30, second: 0 };
 
 describe("random", () => {
@@ -42,13 +43,40 @@ describe("generateDay", () => {
     expect(generateDay(granVia, sunday).visits.length).toBeGreaterThan(0);
   });
 
-  it("only uses fitting rooms after apparel browsing; checkout flag matches path", () => {
+  it("goes to the fitting rooms straight from apparel; checkout only at the end", () => {
     for (const v of generateDay(granVia, "2026-11-10").visits) {
       const zones = v.path.map((s) => s.zone);
-      if (zones.includes("fitting-rooms")) {
-        expect(zones.some((z) => z === "womenswear" || z === "menswear")).toBe(true);
-      }
+      const fitting = zones.indexOf("fitting-rooms");
+      if (fitting >= 0) expect(["womenswear", "menswear"]).toContain(zones[fitting - 1]);
+      expect(zones.filter((z) => z === "fitting-rooms").length).toBeLessThanOrEqual(1);
       expect(zones.includes("checkout")).toBe(v.checkout);
+      if (v.checkout) expect(zones.at(-1)).toBe("checkout");
+      for (let i = 1; i < zones.length; i++) expect(zones[i]).not.toBe(zones[i - 1]);
+    }
+  });
+
+  it("walks the zones in varying order, sometimes going back", () => {
+    const { visits } = generateDay(granVia, "2026-11-10");
+    const routes = new Set(visits.map((v) => v.path.map((s) => s.zone).join(">")));
+    const share = (f: (z: string[]) => boolean) =>
+      visits.filter((v) => f(v.path.map((s) => s.zone))).length / visits.length;
+    expect(routes.size).toBeGreaterThan(40);
+    // Womenswear first most often, but menswear first is common too.
+    expect(share((z) => z[1] === "womenswear")).toBeGreaterThan(share((z) => z[1] === "menswear"));
+    expect(share((z) => z[1] === "menswear")).toBeGreaterThan(0.1);
+    // Going back: around one visit in six returns to a zone already seen.
+    const back = share((z) => new Set(z).size < z.length);
+    expect(back).toBeGreaterThan(0.08);
+    expect(back).toBeLessThan(0.3);
+    // Some leave straight from the entrance; most look around.
+    const entranceOnly = share((z) => z.length === 1);
+    expect(entranceOnly).toBeGreaterThan(0.1);
+    expect(entranceOnly).toBeLessThan(0.35);
+  });
+
+  it("never visits zones a store doesn't have", () => {
+    for (const v of generateDay(valencia, "2026-11-10").visits) {
+      for (const s of v.path) expect(valencia.zones).toContain(s.zone);
     }
   });
 });
@@ -62,6 +90,13 @@ describe("summaries", () => {
     expect(entrants).toBe(day.visits.length);
     expect(checkouts).toBe(day.visits.filter((v) => v.checkout).length);
     expect(summary.customerVisits).toHaveLength(day.visits.filter((v) => v.customerId).length);
+  });
+
+  it("counts each visitor once per zone, even when they go back", () => {
+    const day = simulateDay(granVia, "2026-11-10");
+    const summary = summarizeDay(granVia, "2026-11-10", day);
+    const womens = summary.byHour.reduce((s, h) => s + h.zones.womenswear.visitors, 0);
+    expect(womens).toBe(day.visits.filter((v) => v.path.some((s) => s.zone === "womenswear")).length);
   });
 
   it("only counts what has happened by the cut-off", () => {
