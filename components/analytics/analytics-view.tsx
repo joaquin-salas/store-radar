@@ -2,14 +2,20 @@
 
 import { useSearchParams } from "next/navigation";
 import { OverviewKpiRow } from "@/components/dashboard/kpi-row";
+import { ZoneChart } from "@/components/dashboard/zone-chart";
 import { RangePicker } from "@/components/filters/range-picker";
 import { Badge } from "@/components/ui/badge";
 import { isLiveRange, previousRange, resolveRange } from "@/lib/domain/range";
 import { localNow } from "@/lib/domain/time";
 import { formatDateRange } from "@/lib/format";
 import { scopeLabel } from "@/lib/nav";
-import type { ScopeParams } from "@/lib/queries";
+import { type ScopeParams, useFunnel, useStoreComparison, useTraffic, useWeekdayHours } from "@/lib/queries";
 import { comparisonLabel, rangeFromSearch } from "@/lib/range-params";
+import { FunnelCard } from "./funnel-card";
+import { NewReturningChart } from "./new-returning-chart";
+import { StoreComparison } from "./store-comparison";
+import { TrafficChart } from "./traffic-chart";
+import { WeekdayHeatmap } from "./weekday-heatmap";
 
 /** Analytics for one store or the whole chain over a date range taken from the URL. */
 export function AnalyticsView({ scope }: { scope: string }) {
@@ -20,6 +26,10 @@ export function AnalyticsView({ scope }: { scope: string }) {
   const previous = previousRange(resolved);
   const live = isLiveRange(resolved, now);
   const params: ScopeParams = { store: scope, ...range };
+  const { data: traffic } = useTraffic(params);
+  const { data: funnel } = useFunnel(params);
+  const { data: weekdayHours } = useWeekdayHours(params);
+  const { data: stores } = useStoreComparison(params);
 
   return (
     <div className="flex flex-col gap-4">
@@ -46,6 +56,20 @@ export function AnalyticsView({ scope }: { scope: string }) {
         </h2>
         <OverviewKpiRow params={params} comparisonLabel={comparisonLabel(range, resolved)} />
       </section>
+
+      <TrafficChart traffic={traffic} />
+
+      <div className="grid gap-4 @4xl:grid-cols-2">
+        <FunnelCard funnel={funnel} />
+        <ZoneChart params={params} title="Zones" />
+      </div>
+
+      <WeekdayHeatmap data={weekdayHours} />
+
+      <div className="grid gap-4 @4xl:grid-cols-2">
+        <NewReturningChart traffic={traffic} />
+        <StoreComparison data={stores} scope={scope} />
+      </div>
     </div>
   );
 }

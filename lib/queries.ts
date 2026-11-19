@@ -21,6 +21,7 @@ import type {
   getVisit,
   getVisitStats,
   getVisitsPage,
+  getWeekdayHours,
   getZones,
   listStores,
 } from "@/lib/domain/service";
@@ -43,6 +44,7 @@ export type Funnel = ReturnType<typeof getFunnel>;
 export type HourProfile = ReturnType<typeof getHourProfile>;
 export type StoreComparison = ReturnType<typeof compareStores>;
 export type Flows = ReturnType<typeof getFlows>;
+export type WeekdayHours = ReturnType<typeof getWeekdayHours>;
 export type VisitsPage = ReturnType<typeof getVisitsPage>;
 export type VisitDetail = NonNullable<ReturnType<typeof getVisit>>;
 export type VisitStats = ReturnType<typeof getVisitStats>;
@@ -69,6 +71,7 @@ export const queryKeys = {
   zones: (p: ScopeParams) => [...queryKeys.all, "zones", p] as const,
   funnel: (p: ScopeParams) => [...queryKeys.all, "funnel", p] as const,
   hours: (p: ScopeParams) => [...queryKeys.all, "hours", p] as const,
+  weekdayHours: (p: ScopeParams) => [...queryKeys.all, "weekday-hours", p] as const,
   compare: (p: ScopeParams) => [...queryKeys.all, "compare", p] as const,
   flows: (p: FlowParams) => [...queryKeys.all, "flows", p] as const,
   visits: (p: Partial<VisitsQuery>) => [...queryKeys.all, "visits", p] as const,
@@ -109,6 +112,8 @@ export const useFunnel = (p: ScopeParams) => useScoped<Funnel>(queryKeys.funnel(
 export const useHourProfile = (p: ScopeParams) => useScoped<HourProfile>(queryKeys.hours(p), "/api/hours", p);
 export type FlowParams = ScopeParams & { segment: FlowSegment };
 export const useFlows = (p: FlowParams) => useScoped<Flows>(queryKeys.flows(p), "/api/flows", p);
+export const useWeekdayHours = (p: ScopeParams) =>
+  useScoped<WeekdayHours>(queryKeys.weekdayHours(p), "/api/weekday-hours", p);
 export const useStoreComparison = (p: ScopeParams) =>
   useScoped<StoreComparison>(queryKeys.compare(p), "/api/compare", p);
 

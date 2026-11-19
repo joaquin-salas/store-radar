@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { heatStyle } from "@/components/dashboard/heat";
 import { Button } from "@/components/ui/button";
 import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -84,12 +85,6 @@ function ZoneChord({ matrix }: { matrix: Flows["matrix"] }) {
   );
 }
 
-/** Sequential single-hue scale: six steps from the lightest (zero) to the darkest. */
-function heatStep(v: number, max: number): number {
-  if (v === 0 || max === 0) return 0;
-  return Math.min(5, 1 + Math.floor((v / max) * 5));
-}
-
 function ZoneMatrixTable({ matrix }: { matrix: Flows["matrix"] }) {
   const rows = matrix.ends.slice(0, -1); // nobody moves on from "left"
   const cols = matrix.ends.slice(1); // nobody moves into the entrance
@@ -119,16 +114,12 @@ function ZoneMatrixTable({ matrix }: { matrix: Flows["matrix"] }) {
               </th>
               {cols.map((c, ci) => {
                 const v = matrix.counts[ri][ci + 1];
-                const step = heatStep(v, max);
                 return (
                   <td
                     key={c}
                     title={`${END_LABELS[r]} → ${END_LABELS[c]}: ${formatInt(v)} moves (${formatPercent(total ? v / total : 0)} of visits)`}
                     className="rounded-[4px] px-1.5 py-1 text-right"
-                    style={{
-                      background: `var(--heat-${step})`,
-                      color: step >= 4 ? "var(--heat-ink-high)" : undefined,
-                    }}
+                    style={heatStyle(v, max)}
                   >
                     {v === 0 ? <span className="text-muted-foreground">–</span> : formatInt(v)}
                   </td>

@@ -12,7 +12,8 @@ const config = {
   visitors: { label: "Visitors", color: "var(--chart-1)" },
 } satisfies ChartConfig;
 
-export function ZoneChart({ params }: { params: ScopeParams }) {
+/** Visitors per zone (entrance left out), labelled with the share of store visitors. */
+export function ZoneChart({ params, title = "Zones today" }: { params: ScopeParams; title?: string }) {
   const { data, isPending } = useZones(params);
 
   // Every visitor passes the entrance, so it would always top the ranking: leave it out.
@@ -23,7 +24,7 @@ export function ZoneChart({ params }: { params: ScopeParams }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Zones today</CardTitle>
+        <CardTitle>{title}</CardTitle>
         <CardDescription>Visitors per zone · label shows share of store visitors</CardDescription>
       </CardHeader>
       <CardContent>
