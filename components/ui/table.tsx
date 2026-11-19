@@ -71,6 +71,8 @@ function TableHead({ className, ...props }: React.ComponentProps<"th">) {
       className={cn(
         // Headers use the label style: 11px, semibold, upper case, tracked.
         "h-10 px-3 text-left align-middle text-[11px] font-semibold tracking-[0.08em] whitespace-nowrap text-muted-foreground uppercase [&:has([role=checkbox])]:pr-0",
+        // Sort buttons keep the label style (buttons don't inherit case or tracking).
+        "[&_button]:font-semibold [&_button]:tracking-[0.08em] [&_button]:text-muted-foreground [&_button]:uppercase [&_button:hover]:text-foreground",
         className
       )}
       {...props}

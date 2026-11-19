@@ -1,15 +1,28 @@
 "use client";
 
-import { Input } from "@/components/ui/input";
-import { isLocalDate } from "@/lib/domain/time";
+import { enGB } from "date-fns/locale";
+import { CalendarDays, ChevronDown } from "lucide-react";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { formatDateRange } from "@/lib/format";
 
 /** Earliest date the picker offers. */
 export const MIN_DATE = "2020-01-01";
 
+// Local calendar dates as plain Dates at local midnight (no time-zone shifts).
+const toDate = (iso: string) => {
+  const [y, m, d] = iso.split("-").map(Number);
+  return new Date(y, m - 1, d);
+};
+const toIso = (d: Date) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+
 /**
- * Date field that applies its value on blur or Enter. Typing a date fires a
- * change per finished segment (day, month, year), so applying on change would
- * navigate mid-typing. Remounts (via `key`) when the range changes elsewhere.
+ * Date picker in the app's theme: a trigger styled like the other selectors and
+ * a calendar popover (English, weeks from Monday). Picking a day applies it at
+ * once; days after `max` (today) or before MIN_DATE can't be picked.
  */
 export function DateField({
   label,
@@ -22,22 +35,46 @@ export function DateField({
   max: string;
   onCommit: (date: string) => void;
 }) {
+  const [open, setOpen] = useState(false);
   const commit = (next: string) => {
-    if (next !== value && isLocalDate(next) && next >= MIN_DATE && next <= max) onCommit(next);
+    setOpen(false);
+    if (next !== value && next >= MIN_DATE && next <= max) onCommit(next);
   };
+
   return (
-    <Input
-      key={value}
-      type="date"
-      aria-label={label}
-      defaultValue={value}
-      min={MIN_DATE}
-      max={max}
-      onBlur={(e) => commit(e.currentTarget.value)}
-      onKeyDown={(e) => {
-        if (e.key === "Enter") commit(e.currentTarget.value);
-      }}
-      className="w-36 tabular-nums"
-    />
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger
+        render={
+          <Button
+            variant="outline"
+            aria-label={`${label}: ${formatDateRange(value, value)}`}
+            className="font-medium"
+          />
+        }
+      >
+        <CalendarDays className="text-muted-foreground" aria-hidden />
+        <span className="readout">{formatDateRange(value, value)}</span>
+        <ChevronDown className="text-muted-foreground" aria-hidden />
+      </PopoverTrigger>
+      <PopoverContent align="start" className="w-auto gap-2 p-2">
+        <Calendar
+          mode="single"
+          locale={enGB}
+          weekStartsOn={1}
+          selected={toDate(value)}
+          defaultMonth={toDate(value)}
+          startMonth={toDate(MIN_DATE)}
+          endMonth={toDate(max)}
+          disabled={[{ after: toDate(max) }, { before: toDate(MIN_DATE) }]}
+          onSelect={(d) => d && commit(toIso(d))}
+          autoFocus
+        />
+        <div className="flex justify-end border-t pt-2">
+          <Button variant="ghost" size="sm" onClick={() => commit(max)} disabled={value === max}>
+            Today
+          </Button>
+        </div>
+      </PopoverContent>
+    </Popover>
   );
 }
