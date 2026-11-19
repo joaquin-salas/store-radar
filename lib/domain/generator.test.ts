@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { getStore } from "./catalog";
 import { createRng } from "./random";
-import { generateDay, getDaySummary, simulateDay, summarizeDay } from "./generator";
+import { generateDay, getDaySummary, routeKey, simulateDay, summarizeDay } from "./generator";
 import type { LocalDateTime } from "./time";
 
 const granVia = getStore("mad-granvia")!;
@@ -57,7 +57,7 @@ describe("generateDay", () => {
 
   it("walks the zones in varying order, sometimes going back", () => {
     const { visits } = generateDay(granVia, "2026-11-10");
-    const routes = new Set(visits.map((v) => v.path.map((s) => s.zone).join(">")));
+    const routes = new Set(visits.map((v) => routeKey(v.path)));
     const share = (f: (z: string[]) => boolean) =>
       visits.filter((v) => f(v.path.map((s) => s.zone))).length / visits.length;
     expect(routes.size).toBeGreaterThan(40);
@@ -90,6 +90,9 @@ describe("summaries", () => {
     expect(entrants).toBe(day.visits.length);
     expect(checkouts).toBe(day.visits.filter((v) => v.checkout).length);
     expect(summary.customerVisits).toHaveLength(day.visits.filter((v) => v.customerId).length);
+    // Every visit lands in exactly one route group.
+    const routed = summary.routes.flatMap((m) => Object.values(m)).reduce((s, r) => s + r.visits, 0);
+    expect(routed).toBe(day.visits.length);
   });
 
   it("counts each visitor once per zone, even when they go back", () => {
@@ -104,13 +107,17 @@ describe("summaries", () => {
     const day = simulateDay(granVia, NOW.date);
     const summary = summarizeDay(granVia, NOW.date, day, cut);
     let reached = 0;
+    let finished = 0;
     for (const v of day.visits) {
       if (v.enteredSec > cut) break;
       const left = v.enteredSec + v.totalDwellSec;
+      if (left <= cut) finished++;
       // Checkout is the last stop: reached once its start is past.
       if (v.checkout && left - v.path.at(-1)!.dwellSec <= cut) reached++;
     }
     expect(summary.byHour.reduce((s, h) => s + h.checkouts, 0)).toBe(reached);
+    const routed = summary.routes.flatMap((m) => Object.values(m)).reduce((s, r) => s + r.visits, 0);
+    expect(routed).toBe(finished);
     for (const ref of summary.customerVisits) {
       if (ref.leftSec > cut) expect(ref.enteredSec).toBeLessThanOrEqual(cut);
     }

@@ -24,7 +24,15 @@ function hour(h: number, partial: Partial<HourAgg> = {}): HourAgg {
 
 function day(date: string, hours: HourAgg[], open = { open: 10, close: 12 }): DaySummary {
   const byHour = Array.from({ length: 24 }, (_, h) => hours.find((x) => x.hour === h) ?? hour(h));
-  return { storeId: "test", date, hours: open, cutoffSec: null, byHour, customerVisits: [] };
+  return {
+    storeId: "test",
+    date,
+    hours: open,
+    cutoffSec: null,
+    byHour,
+    customerVisits: [],
+    routes: [{}, {}, {}, {}],
+  };
 }
 
 const sample = day("2026-11-10", [

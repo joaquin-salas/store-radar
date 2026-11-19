@@ -135,4 +135,17 @@ export interface DaySummary {
   cutoffSec: number | null;
   byHour: HourAgg[];
   customerVisits: CustomerVisitRef[];
+  /**
+   * Finished visits grouped by route (see `routeKey`), one map per visitor kind
+   * (see `visitorKind`). Flows are derived from these.
+   */
+  routes: Record<string, RouteAgg>[];
+}
+
+/** Finished visits that took the same route. */
+export interface RouteAgg {
+  visits: number;
+  checkouts: number;
+  /** Sum of time inside, seconds. */
+  dwellSec: number;
 }

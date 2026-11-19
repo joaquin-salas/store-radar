@@ -251,13 +251,14 @@ export function summarizeDay(
   });
 
   const customerVisits: DaySummary["customerVisits"] = [];
+  const routes: DaySummary["routes"] = [{}, {}, {}, {}];
   const cutoff = cutoffSec ?? Infinity;
 
   for (const [i, raw] of day.visits.entries()) {
     if (raw.enteredSec > cutoff) break; // visits are sorted
     // Only what has happened by the cut-off: an in-progress visit counts the
     // stops reached so far, its time inside so far and no checkout yet.
-    const { path, totalDwellSec, checkout } = visitSoFar(raw, cutoff);
+    const { path, totalDwellSec, checkout, ended } = visitSoFar(raw, cutoff);
     const h = byHour[Math.floor(raw.enteredSec / 3600)];
     h.entrants++;
     h.dwellSec += totalDwellSec;
@@ -283,6 +284,15 @@ export function summarizeDay(
         zones,
       });
     }
+    // Routes only from visits that have ended, so none is cut short.
+    if (ended) {
+      const kind = visitorKind(raw.customerId !== null, raw.returning);
+      const key = routeKey(path);
+      const r = (routes[kind][key] ??= { visits: 0, checkouts: 0, dwellSec: 0 });
+      r.visits++;
+      if (checkout) r.checkouts++;
+      r.dwellSec += totalDwellSec;
+    }
   }
 
   return {
@@ -292,10 +302,24 @@ export function summarizeDay(
     cutoffSec: cutoffSec ?? null,
     byHour,
     customerVisits,
+    routes,
   };
 }
 
 const isProductZone = (z: InStoreZone) => (PRODUCT_ZONES as readonly string[]).includes(z);
+
+/** Index into `DaySummary.routes`: anonymous new, anonymous returning, member new, member returning. */
+export const visitorKind = (registered: boolean, returning: boolean) =>
+  (registered ? 2 : 0) + (returning ? 1 : 0);
+
+/** A route is the zones between the entrance and the end of the visit, e.g. "womenswear>fitting-rooms". */
+export const ROUTE_SEPARATOR = ">";
+export function routeKey(path: readonly ZoneStop[]): string {
+  return path
+    .filter((s) => s.zone !== "entrance" && s.zone !== "checkout")
+    .map((s) => s.zone)
+    .join(ROUTE_SEPARATOR);
+}
 
 /**
  * A visit as known at `cutoffSec` (Infinity for a finished day): the stops

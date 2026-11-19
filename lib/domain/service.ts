@@ -9,8 +9,15 @@ import { getDayVisits } from "./generator";
 import { type Page, paginate } from "./page";
 import { type StoreScope, loadSummaries, storeIds } from "./summaries";
 import { type Granularity, computeKpis, funnel, hourProfile, trafficSeries, zoneStats } from "./metrics";
-import { isLiveRange as isLive, previousRange, rangeDays, resolveRange } from "./range";
-import { type RangeInput, VISIT_ID_PATTERN, type VisitStatsQuery, type VisitsQuery } from "./schemas";
+import { type DateRange, isLiveRange as isLive, previousRange, rangeDays, resolveRange } from "./range";
+import { crossStore, flowKpis, journey, mergeRoutes, topRoutes, zoneMatrix } from "./flow-stats";
+import {
+  type FlowsQuery,
+  type RangeInput,
+  VISIT_ID_PATTERN,
+  type VisitStatsQuery,
+  type VisitsQuery,
+} from "./schemas";
 import { durationHistogram, quantile, zoneDwell } from "./visit-stats";
 import {
   type LocalDate,
@@ -33,13 +40,19 @@ interface ScopedQuery {
   range: RangeInput;
 }
 
+/**
+ * "Now" for the previous period: when the range is live, compare against the
+ * previous period up to the same time of day — otherwise "today so far" would
+ * be compared with a full day.
+ */
+function previousNow(range: DateRange, now: LocalDateTime): LocalDateTime {
+  return range.to >= now.date ? { ...now, date: addDays(now.date, -rangeDays(range)) } : now;
+}
+
 export function getOverview(q: ScopedQuery, now: LocalDateTime = localNow()) {
   const range = resolveRange(q.range, now);
   const prev = previousRange(range);
-  // When the range is live, compare against the previous period up to the same
-  // time of day — otherwise "today so far" would be compared with a full day.
-  const len = rangeDays(range);
-  const prevNow: LocalDateTime = range.to >= now.date ? { ...now, date: addDays(now.date, -len) } : now;
+  const prevNow = previousNow(range, now);
 
   return {
     store: q.store,
@@ -63,12 +76,17 @@ export function getTraffic(q: ScopedQuery & { granularity?: Granularity }, now: 
   };
 }
 
+/** Zones any store in the scope has, in walking order. */
+function scopeZones(store: StoreScope): InStoreZone[] {
+  const zoneSet = new Set<InStoreZone>();
+  for (const id of storeIds(store)) for (const z of getStore(id)!.zones) zoneSet.add(z);
+  const order: InStoreZone[] = ["entrance", "womenswear", "menswear", "kids", "fitting-rooms", "checkout"];
+  return order.filter((z) => zoneSet.has(z));
+}
+
 export function getZones(q: ScopedQuery, now: LocalDateTime = localNow()) {
   const range = resolveRange(q.range, now);
-  const zoneSet = new Set<InStoreZone>();
-  for (const id of storeIds(q.store)) for (const z of getStore(id)!.zones) zoneSet.add(z);
-  const order: InStoreZone[] = ["entrance", "womenswear", "menswear", "kids", "fitting-rooms", "checkout"];
-  const zones = order.filter((z) => zoneSet.has(z));
+  const zones = scopeZones(q.store);
   return { store: q.store, range, zones: zoneStats(loadSummaries(q.store, range, now), zones) };
 }
 
@@ -104,6 +122,34 @@ export function listStores(now: LocalDateTime = localNow()) {
     zones: s.zones,
     status: getDayStatus(s, now),
   }));
+}
+
+/**
+ * How visitors move through the stores in a range: route KPIs vs. the previous
+ * period, the journey (Sankey), zone-to-zone moves, the top routes and, for the
+ * whole chain, members shopping away from their home store. Routes count
+ * finished visits only, so today never shows a visit cut short.
+ */
+export function getFlows(q: FlowsQuery, now: LocalDateTime = localNow()) {
+  const range = resolveRange(q.range, now);
+  const prev = previousRange(range);
+  const days = loadSummaries(q.store, range, now);
+  const routes = mergeRoutes(days, q.segment);
+  const zones = scopeZones(q.store);
+  return {
+    store: q.store,
+    range,
+    previousRange: prev,
+    live: isLive(range, now),
+    segment: q.segment,
+    zones,
+    kpis: flowKpis(routes),
+    previous: flowKpis(mergeRoutes(loadSummaries(q.store, prev, previousNow(range, now)), q.segment)),
+    journey: journey(routes),
+    matrix: zoneMatrix(routes, zones),
+    top: topRoutes(routes),
+    crossStore: q.store === "all" ? crossStore(days) : null,
+  };
 }
 
 // --- Tables ------------------------------------------------------------------

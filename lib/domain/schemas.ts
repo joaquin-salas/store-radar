@@ -107,3 +107,13 @@ export const customersQuerySchema = z.object({
 });
 
 export type CustomersQuery = z.infer<typeof customersQuerySchema>;
+
+/** Visitor segments for flows: everyone, first-time, returning, or loyalty members. */
+export const FLOW_SEGMENTS = ["all", "new", "returning", "members"] as const;
+export type FlowSegment = (typeof FLOW_SEGMENTS)[number];
+
+export const flowsQuerySchema = scopedRangeSchema.extend({
+  segment: z.enum(FLOW_SEGMENTS).default("all").describe("Which visitors to include"),
+});
+
+export type FlowsQuery = z.infer<typeof flowsQuerySchema>;
