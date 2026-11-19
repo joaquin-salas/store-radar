@@ -64,6 +64,23 @@ describe("summaries", () => {
     expect(summary.customerVisits).toHaveLength(day.visits.filter((v) => v.customerId).length);
   });
 
+  it("only counts what has happened by the cut-off", () => {
+    const cut = 16 * 3600 + 30 * 60;
+    const day = simulateDay(granVia, NOW.date);
+    const summary = summarizeDay(granVia, NOW.date, day, cut);
+    let reached = 0;
+    for (const v of day.visits) {
+      if (v.enteredSec > cut) break;
+      const left = v.enteredSec + v.totalDwellSec;
+      // Checkout is the last stop: reached once its start is past.
+      if (v.checkout && left - v.path.at(-1)!.dwellSec <= cut) reached++;
+    }
+    expect(summary.byHour.reduce((s, h) => s + h.checkouts, 0)).toBe(reached);
+    for (const ref of summary.customerVisits) {
+      if (ref.leftSec > cut) expect(ref.enteredSec).toBeLessThanOrEqual(cut);
+    }
+  });
+
   it("cuts today off at the current time", () => {
     const today = getDaySummary("mad-granvia", NOW.date, NOW);
     expect(today.cutoffSec).toBe(16 * 3600 + 30 * 60);

@@ -217,33 +217,36 @@ export function summarizeDay(
   });
 
   const customerVisits: DaySummary["customerVisits"] = [];
+  const cutoff = cutoffSec ?? Infinity;
 
-  for (const [i, v] of day.visits.entries()) {
-    if (cutoffSec !== undefined && v.enteredSec > cutoffSec) break; // visits are sorted
-    const h = byHour[Math.floor(v.enteredSec / 3600)];
+  for (const [i, raw] of day.visits.entries()) {
+    if (raw.enteredSec > cutoff) break; // visits are sorted
+    // Only what has happened by the cut-off: an in-progress visit counts the
+    // stops reached so far, its time inside so far and no checkout yet.
+    const { path, totalDwellSec, checkout } = visitSoFar(raw, cutoff);
+    const h = byHour[Math.floor(raw.enteredSec / 3600)];
     h.entrants++;
-    h.dwellSec += v.totalDwellSec;
-    if (v.checkout) h.checkouts++;
-    // Path is [entrance, ...product zones, fitting-rooms?, checkout?]
-    const second = v.path[1]?.zone;
-    if (second === "womenswear" || second === "menswear" || second === "kids") h.browsed++;
-    if (v.returning) h.returning++;
-    if (v.customerId) {
+    h.dwellSec += totalDwellSec;
+    if (checkout) h.checkouts++;
+    if (path.some((s) => isProductZone(s.zone))) h.browsed++;
+    if (raw.returning) h.returning++;
+
+    let zones = 0;
+    for (const stop of path) {
+      h.zones[stop.zone].visitors++;
+      h.zones[stop.zone].dwellSec += stop.dwellSec;
+      zones |= ZONE_BIT[stop.zone];
+    }
+    if (raw.customerId) {
       h.registered++;
-      let zones = 0;
-      for (const stop of v.path) zones |= ZONE_BIT[stop.zone];
       customerVisits.push({
-        customerId: v.customerId,
-        enteredSec: v.enteredSec,
-        checkout: v.checkout,
-        leftSec: v.enteredSec + v.totalDwellSec,
+        customerId: raw.customerId,
+        enteredSec: raw.enteredSec,
+        checkout,
+        leftSec: raw.enteredSec + raw.totalDwellSec,
         seq: i + 1,
         zones,
       });
-    }
-    for (const stop of v.path) {
-      h.zones[stop.zone].visitors++;
-      h.zones[stop.zone].dwellSec += stop.dwellSec;
     }
   }
 
@@ -254,6 +257,34 @@ export function summarizeDay(
     cutoffSec: cutoffSec ?? null,
     byHour,
     customerVisits,
+  };
+}
+
+const isProductZone = (z: InStoreZone) => (PRODUCT_ZONES as readonly string[]).includes(z);
+
+/**
+ * A visit as known at `cutoffSec` (Infinity for a finished day): the stops
+ * reached so far, the last one cut at the cut-off, and checkout only once reached.
+ */
+export function visitSoFar(
+  visit: Pick<RawVisit, "enteredSec" | "path" | "totalDwellSec" | "checkout">,
+  cutoffSec: number,
+): { path: ZoneStop[]; totalDwellSec: number; checkout: boolean; ended: boolean } {
+  if (visit.enteredSec + visit.totalDwellSec <= cutoffSec) {
+    return { path: visit.path, totalDwellSec: visit.totalDwellSec, checkout: visit.checkout, ended: true };
+  }
+  const path: ZoneStop[] = [];
+  let t = visit.enteredSec;
+  for (const s of visit.path) {
+    if (t > cutoffSec) break;
+    path.push({ zone: s.zone, dwellSec: Math.min(s.dwellSec, cutoffSec - t) });
+    t += s.dwellSec;
+  }
+  return {
+    path,
+    totalDwellSec: cutoffSec - visit.enteredSec,
+    checkout: path.some((s) => s.zone === "checkout"),
+    ended: false,
   };
 }
 

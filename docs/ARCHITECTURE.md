@@ -90,6 +90,9 @@ There is no database. All data is generated deterministically:
    the KPIs and the charts always agree.
 4. **Live.** For today, data is cut off at the current Madrid time: visits
    after "now" are dropped and the current hour's street count is pro-rated.
+   A visit still under way counts only what has happened so far (stops
+   reached, time inside so far, checkout once reached), so today never shows
+   checkouts that haven't happened yet.
    Each refetch therefore shows new visitors arriving. KPI comparisons for
    "today" use yesterday _up to the same time_, not a full day.
 5. **New vs. returning.** Each visit is new or returning (device seen on an earlier day). Returning shares differ per store (tourist flagship vs. local store), drop at weekends, and returning visitors reach checkout slightly more often. Returning anonymous visitors reuse a stable hashed device id from a per-store pool, so the same device shows up on several days; registered members are recognised by their account. _Simplification:_ a returning device's earlier visits are drawn from realistic rates rather than verified one by one, which would require re-simulating months of history per request.
