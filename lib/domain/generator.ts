@@ -6,8 +6,8 @@
  * summaries (used by KPIs and charts) are derived from those visits, so tables,
  * charts and the AI assistant always agree.
  */
-import { allCustomers, customersOfStore } from "./customers";
-import { PRODUCT_ZONES, ZONE_BEHAVIOUR, getStore } from "./catalog";
+import { allCustomers, customersOfStore, memberPicker } from "./customers";
+import { PRODUCT_ZONES, ZONE_BEHAVIOUR, ZONE_BIT, getStore } from "./catalog";
 import { createRng, hashString } from "./random";
 import { type LocalDate, type LocalDateTime, dayOfWeek, formatClock, secondsOfDay } from "./time";
 import type {
@@ -78,8 +78,9 @@ export function simulateDay(store: Store, date: LocalDate): SimulatedDay {
   const rng = createRng(`${store.id}|${date}`);
   const hours = openingHours(store, date);
   const dayFactor = WEEKDAY_FACTOR[dayOfWeek(date)] * (1 + rng.normal(0, 0.06));
-  const homeCustomers = customersOfStore(store.id);
-  const anyCustomers = allCustomers();
+  // Members who shop that day (joined, not churned), weighted by how often they shop.
+  const homeMembers = memberPicker(customersOfStore(store.id), date);
+  const anyMembers = memberPicker(allCustomers(), date);
   const hasZone = new Set(store.zones);
   const returningRate = store.returningRate * RETURNING_WEEKDAY_FACTOR[dayOfWeek(date)];
 
@@ -108,8 +109,9 @@ export function simulateDay(store: Store, date: LocalDate): SimulatedDay {
       // device seen on earlier days, or a device never seen before.
       let customerId: string | null = null;
       if (rng.chance(store.registeredRate)) {
-        const pool = rng.chance(0.9) && homeCustomers.length ? homeCustomers : anyCustomers;
-        customerId = rng.pick(pool).id;
+        // Mostly their home store; sometimes a member of another store passes by.
+        const pool = rng.chance(0.9) ? homeMembers : anyMembers;
+        customerId = pool.pick(rng.next())?.id ?? null;
       }
       const returning = rng.chance(customerId ? REGISTERED_RETURNING_RATE : returningRate);
       const deviceIndex = returning && !customerId ? rng.int(0, store.devicePool - 1) : -1;
@@ -216,7 +218,7 @@ export function summarizeDay(
 
   const customerVisits: DaySummary["customerVisits"] = [];
 
-  for (const v of day.visits) {
+  for (const [i, v] of day.visits.entries()) {
     if (cutoffSec !== undefined && v.enteredSec > cutoffSec) break; // visits are sorted
     const h = byHour[Math.floor(v.enteredSec / 3600)];
     h.entrants++;
@@ -228,7 +230,16 @@ export function summarizeDay(
     if (v.returning) h.returning++;
     if (v.customerId) {
       h.registered++;
-      customerVisits.push({ customerId: v.customerId, enteredSec: v.enteredSec, checkout: v.checkout });
+      let zones = 0;
+      for (const stop of v.path) zones |= ZONE_BIT[stop.zone];
+      customerVisits.push({
+        customerId: v.customerId,
+        enteredSec: v.enteredSec,
+        checkout: v.checkout,
+        leftSec: v.enteredSec + v.totalDwellSec,
+        seq: i + 1,
+        zones,
+      });
     }
     for (const stop of v.path) {
       h.zones[stop.zone].visitors++;

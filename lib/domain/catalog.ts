@@ -16,6 +16,16 @@ export const ZONE_LABELS: Record<ZoneType, string> = {
   checkout: "Checkout",
 };
 
+/** Bit per in-store zone, for compact zone sets (e.g. which zones a visit covered). */
+export const ZONE_BIT: Record<InStoreZone, number> = {
+  entrance: 1,
+  womenswear: 2,
+  menswear: 4,
+  kids: 8,
+  "fitting-rooms": 16,
+  checkout: 32,
+};
+
 export const PRODUCT_ZONES: readonly ProductZone[] = ["womenswear", "menswear", "kids"];
 
 /**

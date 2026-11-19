@@ -42,6 +42,8 @@ Read `docs/ARCHITECTURE.md` before structural changes.
 - **One source of truth.** API routes and AI tools are thin wrappers over
   `lib/domain/service.ts` and validate input with `lib/domain/schemas.ts`.
   Never compute KPIs in components or route handlers.
+- **Hidden truth stays hidden.** Simulated member behaviour (`memberBehaviour`) is for the
+  generator and its tests; queries and UI infer everything from visits.
 - **Determinism.** Never use `Math.random()` or `Date.now()` inside the domain;
   use `createRng(seed)` and pass `now: LocalDateTime` explicitly (service
   functions default it to `localNow()`). Changing generator logic shifts all

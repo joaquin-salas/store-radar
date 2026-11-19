@@ -117,6 +117,12 @@ export interface CustomerVisitRef {
   customerId: string;
   enteredSec: number;
   checkout: boolean;
+  /** Second of the day the visitor leaves; later than the cut-off while still inside. */
+  leftSec: number;
+  /** Position of the visit in its day (1-based), i.e. the sequence in its visit id. */
+  seq: number;
+  /** In-store zones the visit went through, as a bitmask (see `ZONE_BIT`). */
+  zones: number;
 }
 
 /** Everything the dashboard needs about one store-day, without per-visit detail. */

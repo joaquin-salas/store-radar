@@ -36,7 +36,7 @@ Next.js or React, which keeps it unit-testable and reusable by the AI tools.
 | ---------------- | --------------------------------------------------------------------- |
 | `types.ts`       | Store, Zone, Visit, Customer, hourly/daily aggregates                 |
 | `catalog.ts`     | The fictional chain: 3 stores, zones, opening hours, behaviour params |
-| `customers.ts`   | 6,000 fictional loyalty members (seeded)                              |
+| `customers.ts`   | 6,000 fictional loyalty members (seeded) and their hidden behaviour   |
 | `random.ts`      | Seeded PRNG (cyrb53 hash + mulberry32)                                |
 | `time.ts`        | Europe/Madrid local time, date arithmetic on `YYYY-MM-DD` strings     |
 | `generator.ts`   | Simulates a store-day, summarises it, caches past days                |
@@ -89,7 +89,8 @@ There is no database. All data is generated deterministically:
    Each refetch therefore shows new visitors arriving. KPI comparisons for
    "today" use yesterday _up to the same time_, not a full day.
 5. **New vs. returning.** Each visit is new or returning (device seen on an earlier day). Returning shares differ per store (tourist flagship vs. local store), drop at weekends, and returning visitors reach checkout slightly more often. Returning anonymous visitors reuse a stable hashed device id from a per-store pool, so the same device shows up on several days; registered members are recognised by their account. _Simplification:_ a returning device's earlier visits are drawn from realistic rates rather than verified one by one, which would require re-simulating months of history per request.
-6. **Caching.** Past days never change, so their summaries are memoised per
+6. **Loyalty members behave like people.** Each member has a seeded, hidden activity level (long-tailed: a few regulars, many occasional shoppers; gold > silver > bronze, capped at a few visits a week), a join date and, for about a fifth, a date they stopped shopping. A member visit picks among members shopping that day, weighted by activity (cumulative weights + binary search), mostly from the store's own members. Nobody visits before joining or after stopping. The dashboard never reads this hidden behaviour: segments and profiles are inferred from visits.
+7. **Caching.** Past days never change, so their summaries are memoised per
    server instance (bounded map). A cold 30-day chain query (current + previous
    period, 180 store-days) takes ~0.25 s; warm, ~5 ms.
 
