@@ -7,12 +7,12 @@ import type { Kpis } from "@/lib/domain/metrics";
 import { formatChange, formatDuration, formatInt, formatPercent, relativeChange } from "@/lib/format";
 import { type ScopeParams, useOverview } from "@/lib/queries";
 
-interface KpiDef {
+export interface KpiDef<T = Kpis> {
   label: string;
   hint: string;
-  value: (k: Kpis) => string;
+  value: (k: T) => string;
   /** Numeric value used for the comparison; omit for KPIs without a meaningful delta. */
-  compare?: (k: Kpis) => number;
+  compare?: (k: T) => number;
 }
 
 const KPIS: KpiDef[] = [
@@ -54,19 +54,30 @@ const KPIS: KpiDef[] = [
   },
 ];
 
-/** KPI cards with a comparison; pass `current`/`previous` or nothing while loading. */
-export function KpiRow({
-  current,
-  previous,
-  comparisonLabel,
-}: {
+/** The store KPI cards with a comparison; pass `current`/`previous` or nothing while loading. */
+export function KpiRow(props: {
   current: Kpis | undefined;
   previous: Kpis | undefined;
   comparisonLabel: string;
 }) {
+  return <KpiCards defs={KPIS} {...props} />;
+}
+
+/** A row of KPI cards for any set of definitions (six fit one row on wide pages). */
+export function KpiCards<T>({
+  defs,
+  current,
+  previous,
+  comparisonLabel,
+}: {
+  defs: KpiDef<T>[];
+  current: T | undefined;
+  previous: T | undefined;
+  comparisonLabel: string;
+}) {
   return (
     <div className="grid grid-cols-2 gap-3 @xl:grid-cols-3 @5xl:grid-cols-6">
-      {KPIS.map((kpi) =>
+      {defs.map((kpi) =>
         !current || !previous ? (
           <Skeleton key={kpi.label} className="h-[104px] rounded-xl" />
         ) : (
@@ -96,15 +107,15 @@ export function OverviewKpiRow({
   return <KpiRow current={data?.kpis} previous={data?.previous} comparisonLabel={comparisonLabel} />;
 }
 
-function KpiCard({
+function KpiCard<T>({
   kpi,
   current,
   previous,
   comparisonLabel,
 }: {
-  kpi: KpiDef;
-  current: Kpis;
-  previous: Kpis;
+  kpi: KpiDef<T>;
+  current: T;
+  previous: T;
   comparisonLabel: string;
 }) {
   const ratio = kpi.compare ? relativeChange(kpi.compare(current), kpi.compare(previous)) : null;

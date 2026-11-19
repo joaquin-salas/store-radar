@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatChange, formatDateRange } from "./format";
+import { formatChange, formatDateRange, formatDaysAgo } from "./format";
 
 describe("formatDateRange", () => {
   it("shortens ranges within a month or a year", () => {
@@ -16,5 +16,14 @@ describe("formatChange", () => {
     expect(formatChange(-0.008)).toEqual({ text: "−0.8%", direction: "down" });
     expect(formatChange(-0.0002)).toEqual({ text: "0%", direction: "flat" });
     expect(formatChange(0)).toEqual({ text: "0%", direction: "flat" });
+  });
+});
+
+describe("formatDaysAgo", () => {
+  it("is relative for the last month and a date beyond", () => {
+    expect(formatDaysAgo("2026-11-18", "2026-11-18")).toBe("Today");
+    expect(formatDaysAgo("2026-11-17", "2026-11-18")).toBe("Yesterday");
+    expect(formatDaysAgo("2026-11-01", "2026-11-18")).toBe("17 days ago");
+    expect(formatDaysAgo("2026-09-01", "2026-11-18")).toBe("1 Sept 2026");
   });
 });

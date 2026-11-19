@@ -37,6 +37,8 @@ Next.js or React, which keeps it unit-testable and reusable by the AI tools.
 | `types.ts`       | Store, Zone, Visit, Customer, hourly/daily aggregates                 |
 | `catalog.ts`     | The fictional chain: 3 stores, zones, opening hours, behaviour params |
 | `customers.ts`   | 6,000 fictional loyalty members (seeded) and their hidden behaviour   |
+| `members.ts`     | Member activity, segments, programme KPIs, customer profile           |
+| `summaries.ts`   | Load daily summaries for a store scope and range                      |
 | `random.ts`      | Seeded PRNG (cyrb53 hash + mulberry32)                                |
 | `time.ts`        | Europe/Madrid local time, date arithmetic on `YYYY-MM-DD` strings     |
 | `generator.ts`   | Simulates a store-day, summarises it, caches past days                |
@@ -48,22 +50,24 @@ Next.js or React, which keeps it unit-testable and reusable by the AI tools.
 
 ### API (`app/api`)
 
-| Route                   | Query params                                                  | Returns                                                                                            |
-| ----------------------- | ------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
-| `/api/stores`           | —                                                             | Stores with open/closed status                                                                     |
-| `/api/stores/[id]/live` | —                                                             | People inside per zone, capacity, alerts, members inside, last 90 min (refetched every 5 s)        |
-| `/api/stores/[id]/pace` | —                                                             | KPIs vs. a typical day, forecast, usual peak, hourly profile                                       |
-| `/api/overview`         | `store`, `preset` \| `from`+`to`                              | KPIs + previous-period KPIs                                                                        |
-| `/api/traffic`          | same + `granularity`                                          | Street vs. visitors series                                                                         |
-| `/api/zones`            | same                                                          | Visitors, visit rate, dwell per zone                                                               |
-| `/api/funnel`           | same                                                          | Street → entrance → browse → fitting → checkout                                                    |
-| `/api/hours`            | same                                                          | Average visitors per hour of day                                                                   |
-| `/api/compare`          | `preset` \| `from`+`to`                                       | KPIs per store                                                                                     |
-| `/api/visits`           | `store`, `date`, `segment`, `sort`, `dir`, `page`, `pageSize` | Paginated visits                                                                                   |
-| `/api/visits/stats`     | `store`, `date`, `segment`                                    | Visit-length histogram (2-min buckets, finished visits) and median time per zone (completed stops) |
-| `/api/visits/[id]`      | —                                                             | One visit with its timeline (time each zone was reached, when they left)                           |
-| `/api/customers`        | `q`, `store`, `tier`, `sort`, `dir`, `page`, `pageSize`       | Paginated customers                                                                                |
-| `/api/chat`             | POST (AI SDK UI messages)                                     | Streamed assistant response                                                                        |
+| Route                     | Query params                                                       | Returns                                                                                            |
+| ------------------------- | ------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------- |
+| `/api/stores`             | —                                                                  | Stores with open/closed status                                                                     |
+| `/api/stores/[id]/live`   | —                                                                  | People inside per zone, capacity, alerts, members inside, last 90 min (refetched every 5 s)        |
+| `/api/stores/[id]/pace`   | —                                                                  | KPIs vs. a typical day, forecast, usual peak, hourly profile                                       |
+| `/api/overview`           | `store`, `preset` \| `from`+`to`                                   | KPIs + previous-period KPIs                                                                        |
+| `/api/traffic`            | same + `granularity`                                               | Street vs. visitors series                                                                         |
+| `/api/zones`              | same                                                               | Visitors, visit rate, dwell per zone                                                               |
+| `/api/funnel`             | same                                                               | Street → entrance → browse → fitting → checkout                                                    |
+| `/api/hours`              | same                                                               | Average visitors per hour of day                                                                   |
+| `/api/compare`            | `preset` \| `from`+`to`                                            | KPIs per store                                                                                     |
+| `/api/visits`             | `store`, `date`, `segment`, `sort`, `dir`, `page`, `pageSize`      | Paginated visits                                                                                   |
+| `/api/visits/stats`       | `store`, `date`, `segment`                                         | Visit-length histogram (2-min buckets, finished visits) and median time per zone (completed stops) |
+| `/api/visits/[id]`        | —                                                                  | One visit with its timeline (time each zone was reached, when they left)                           |
+| `/api/customers`          | `q`, `store`, `tier`, `segment`, `sort`, `dir`, `page`, `pageSize` | Paginated members with 30-day activity, last visit and segment                                     |
+| `/api/customers/overview` | `store`                                                            | Programme KPIs (30 days vs. the 30 before) and segments by tier                                    |
+| `/api/customers/[id]`     | —                                                                  | Member profile: activity, 90-day calendar, stores, zones, recent visits                            |
+| `/api/chat`               | POST (AI SDK UI messages)                                          | Streamed assistant response                                                                        |
 
 `store` is a store id or `all`. `preset` is `today`, `yesterday`, `7d` or `30d`
 (the last two include today). Custom ranges are capped at 92 days.
@@ -115,6 +119,12 @@ assistant docks on the left and the page fills the rest.
   the API takes, validated with the same schema (`lib/range-params.ts`). The
   header carries the range to other range views, and remembers it across a
   detour through a view without one. Custom dates apply on blur or Enter.
+- **Customers** (`/<scope>/customers`, scope = home store): programme KPIs
+  (30 days vs. the 30 before, up to the same time of day), segments by last
+  visit (active ≤ 14 days, lapsing ≤ 60, lapsed beyond) that filter the member
+  table, and a profile page per member (`/<scope>/customers/<id>`) with a
+  90-day visit calendar, stores, zones and recent visits linking to the
+  Visits drawer. Table state lives in the URL (`lib/customers-params.ts`).
 - **Visits** (`/<store>/visits`) keeps its table state in the URL too:
   `?date=&segment=&sort=&dir=&page=` (`lib/visits-params.ts`; defaults are
   left out). TanStack Table v9 runs in manual mode: sorting and paging are done

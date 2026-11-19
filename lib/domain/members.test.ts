@@ -1,15 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { allCustomers, getCustomer, memberBehaviour } from "./customers";
-import { loadSummaries } from "./service";
-import { type LocalDateTime, addDays } from "./time";
+import { SEGMENT_DAYS } from "./members";
+import { getCustomerProfile, getCustomersPage, getMemberOverview, getVisit, loadSummaries } from "./service";
+import { type LocalDateTime, addDays, diffDays } from "./time";
 import type { CustomerTier } from "./types";
 
-const NOW: LocalDateTime = {
-  date: "2026-11-18",
-  hour: 21,
-  minute: 30,
-  second: 0,
-};
+const NOW: LocalDateTime = { date: "2026-11-18", hour: 21, minute: 30, second: 0 };
 const DAYS = 60;
 
 /** Member visits over the last DAYS days, chain-wide. */
@@ -18,11 +14,7 @@ function memberVisits() {
   const out: { customerId: string; date: string; storeId: string }[] = [];
   for (const day of loadSummaries("all", range, NOW)) {
     for (const ref of day.customerVisits)
-      out.push({
-        customerId: ref.customerId,
-        date: day.date,
-        storeId: day.storeId,
-      });
+      out.push({ customerId: ref.customerId, date: day.date, storeId: day.storeId });
   }
   return out;
 }
@@ -66,5 +58,67 @@ describe("loyalty members", () => {
     expect(recent).toBeGreaterThan(20);
     const home = visits.filter((v) => getCustomer(v.customerId)!.homeStoreId === v.storeId).length;
     expect(home / visits.length).toBeGreaterThan(0.8);
+  });
+});
+
+describe("member queries", () => {
+  const base = {
+    store: "all",
+    tier: "all",
+    segment: "all",
+    sort: "visits",
+    dir: "desc",
+    page: 0,
+    pageSize: 100,
+  } as const;
+
+  it("segments members by days since their last visit", () => {
+    for (const r of getCustomersPage({ ...base, segment: "active" }, NOW).rows) {
+      expect(diffDays(r.lastVisit!, NOW.date)).toBeLessThanOrEqual(SEGMENT_DAYS.active);
+    }
+    const lapsed = getCustomersPage({ ...base, segment: "lapsed", sort: "lastVisit" }, NOW).rows;
+    expect(
+      lapsed.every((r) => r.lastVisit === null || diffDays(r.lastVisit, NOW.date) > SEGMENT_DAYS.lapsing),
+    ).toBe(true);
+    const total = (["active", "lapsing", "lapsed"] as const)
+      .map((segment) => getCustomersPage({ ...base, segment }, NOW).total)
+      .reduce((a, b) => a + b, 0);
+    expect(total).toBe(allCustomers().length);
+  });
+
+  it("reports programme KPIs that agree with the segments and the table", () => {
+    const o = getMemberOverview({ store: "vlc-colon" }, NOW);
+    const members = getCustomersPage({ ...base, store: "vlc-colon" }, NOW);
+    expect(o.segments.reduce((a, s) => a + s.total, 0)).toBe(members.total);
+    for (const s of o.segments) expect(s.byTier.bronze + s.byTier.silver + s.byTier.gold).toBe(s.total);
+    const k = o.kpis;
+    expect(k.activeMembers).toBeLessThanOrEqual(k.members);
+    expect(k.memberVisitShare).toBeGreaterThan(0.08);
+    expect(k.memberVisitShare).toBeLessThan(0.25);
+    // Members are mostly returning visitors, who reach the till more often.
+    expect(k.memberCheckoutRate).toBeGreaterThan(k.otherCheckoutRate);
+    expect(o.previous.memberVisits).toBeGreaterThan(0);
+  });
+
+  it("builds a profile consistent with the table row", () => {
+    const row = getCustomersPage({ ...base, tier: "gold" }, NOW).rows[0];
+    const p = getCustomerProfile(row.id, NOW)!;
+    expect(p.visits30).toBe(row.visits);
+    expect(p.lastVisit).toBe(row.lastVisit);
+    expect(p.segment).toBe(row.segment);
+    expect(p.calendar).toHaveLength(90);
+    expect(p.calendar.reduce((a, d) => a + d.visits, 0)).toBe(p.visits90);
+    expect(p.recentVisits[0].date).toBe(row.lastVisit);
+    expect(p.stores.reduce((a, s) => a + s.share, 0)).toBeCloseTo(1);
+    expect(p.recentVisits[0].visitId).toMatch(/^[a-z-]+-\d{8}-\d{5}$/);
+    expect(getCustomerProfile("C99999", NOW)).toBeNull();
+  });
+
+  it("links profile visits to real visits", () => {
+    const row = getCustomersPage({ ...base, segment: "active" }, NOW).rows[5];
+    const past = getCustomerProfile(row.id, NOW)!.recentVisits.find((v) => v.date < NOW.date)!;
+    const visit = getVisit(past.visitId, NOW)!;
+    expect(visit.customerId).toBe(row.id);
+    expect(visit.checkout).toBe(past.checkout);
   });
 });

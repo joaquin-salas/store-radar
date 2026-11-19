@@ -3,48 +3,30 @@
  * Every function takes an optional `now` so results are reproducible in tests.
  */
 import { STORES, ZONE_LABELS, getStore } from "./catalog";
-import { allCustomers, getCustomer } from "./customers";
+import { getCustomer } from "./customers";
 import { getDayStatus } from "./status";
-import { getDaySummary, getDayVisits } from "./generator";
+import { getDayVisits } from "./generator";
+import { type Page, paginate } from "./page";
+import { type StoreScope, loadSummaries, storeIds } from "./summaries";
 import { type Granularity, computeKpis, funnel, hourProfile, trafficSeries, zoneStats } from "./metrics";
-import { type DateRange, isLiveRange as isLive, previousRange, rangeDays, resolveRange } from "./range";
-import {
-  type CustomersQuery,
-  type RangeInput,
-  VISIT_ID_PATTERN,
-  type VisitStatsQuery,
-  type VisitsQuery,
-} from "./schemas";
+import { isLiveRange as isLive, previousRange, rangeDays, resolveRange } from "./range";
+import { type RangeInput, VISIT_ID_PATTERN, type VisitStatsQuery, type VisitsQuery } from "./schemas";
 import { durationHistogram, quantile, zoneDwell } from "./visit-stats";
 import {
   type LocalDate,
   type LocalDateTime,
   addDays,
-  eachDay,
   formatClock,
   isLocalDate,
   localNow,
   secondsOfDay,
 } from "./time";
-import type { Customer, DaySummary, InStoreZone, Visit } from "./types";
+import type { Customer, InStoreZone, Visit } from "./types";
 
 export { type DateRange, previousRange, resolveRange } from "./range";
 
-export type StoreScope = "all" | (string & {});
-
-function storeIds(scope: StoreScope): string[] {
-  return scope === "all" ? STORES.map((s) => s.id) : [scope];
-}
-
-export function loadSummaries(scope: StoreScope, range: DateRange, now: LocalDateTime): DaySummary[] {
-  const ids = storeIds(scope);
-  const to = range.to < now.date ? range.to : now.date;
-  const out: DaySummary[] = [];
-  for (const date of eachDay(range.from, to)) {
-    for (const id of ids) out.push(getDaySummary(id, date, now));
-  }
-  return out;
-}
+export { type StoreScope, loadSummaries } from "./summaries";
+export { type Page } from "./page";
 
 interface ScopedQuery {
   store: StoreScope;
@@ -125,17 +107,6 @@ export function listStores(now: LocalDateTime = localNow()) {
 }
 
 // --- Tables ------------------------------------------------------------------
-
-export interface Page<T> {
-  rows: T[];
-  total: number;
-  page: number;
-  pageSize: number;
-}
-
-function paginate<T>(rows: T[], page: number, pageSize: number): Page<T> {
-  return { rows: rows.slice(page * pageSize, (page + 1) * pageSize), total: rows.length, page, pageSize };
-}
 
 const SEGMENT_FILTERS: Record<VisitsQuery["segment"], (v: Visit) => boolean> = {
   all: () => true,
@@ -306,59 +277,10 @@ export function getVisitStats(q: VisitStatsQuery, now: LocalDateTime = localNow(
   };
 }
 
-/** Window used for per-customer activity stats. */
-export const CUSTOMER_ACTIVITY_DAYS = 30;
-
-export interface CustomerRow extends Customer {
-  homeStoreName: string;
-  visits: number;
-  checkouts: number;
-  lastVisit: LocalDate | null;
-}
-
-export function getCustomersPage(q: CustomersQuery, now: LocalDateTime = localNow()): Page<CustomerRow> {
-  const range = { from: addDays(now.date, -(CUSTOMER_ACTIVITY_DAYS - 1)), to: now.date };
-  const activity = new Map<string, { visits: number; checkouts: number; lastVisit: LocalDate }>();
-  for (const day of loadSummaries("all", range, now)) {
-    for (const ref of day.customerVisits) {
-      const a = activity.get(ref.customerId);
-      if (a) {
-        a.visits++;
-        if (ref.checkout) a.checkouts++;
-        if (day.date > a.lastVisit) a.lastVisit = day.date;
-      } else {
-        activity.set(ref.customerId, { visits: 1, checkouts: ref.checkout ? 1 : 0, lastVisit: day.date });
-      }
-    }
-  }
-
-  const needle = q.q?.toLowerCase();
-  let rows: CustomerRow[] = allCustomers()
-    .filter(
-      (c) =>
-        (q.store === "all" || c.homeStoreId === q.store) &&
-        (q.tier === "all" || c.tier === q.tier) &&
-        (!needle || c.name.toLowerCase().includes(needle) || c.id.toLowerCase().includes(needle)),
-    )
-    .map((c) => {
-      const a = activity.get(c.id);
-      return {
-        ...c,
-        homeStoreName: getStore(c.homeStoreId)!.name,
-        visits: a?.visits ?? 0,
-        checkouts: a?.checkouts ?? 0,
-        lastVisit: a?.lastVisit ?? null,
-      };
-    });
-
-  const sign = q.dir === "asc" ? 1 : -1;
-  const cmp: Record<CustomersQuery["sort"], (a: CustomerRow, b: CustomerRow) => number> = {
-    name: (a, b) => a.name.localeCompare(b.name, "es"),
-    visits: (a, b) => a.visits - b.visits,
-    checkouts: (a, b) => a.checkouts - b.checkouts,
-    lastVisit: (a, b) => (a.lastVisit ?? "").localeCompare(b.lastVisit ?? ""),
-    memberSince: (a, b) => a.memberSince.localeCompare(b.memberSince),
-  };
-  rows = rows.sort((a, b) => sign * cmp[q.sort](a, b) || a.id.localeCompare(b.id));
-  return paginate(rows, q.page, q.pageSize);
-}
+export {
+  type CustomerProfile,
+  type CustomerRow,
+  getCustomerProfile,
+  getCustomersPage,
+  getMemberOverview,
+} from "./members";

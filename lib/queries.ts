@@ -10,7 +10,9 @@ import type { CustomersQuery, VisitStatsQuery, VisitsQuery } from "@/lib/domain/
 import type {
   DateRange,
   compareStores,
+  getCustomerProfile,
   getCustomersPage,
+  getMemberOverview,
   getFunnel,
   getHourProfile,
   getOverview,
@@ -43,6 +45,8 @@ export type VisitsPage = ReturnType<typeof getVisitsPage>;
 export type VisitDetail = NonNullable<ReturnType<typeof getVisit>>;
 export type VisitStats = ReturnType<typeof getVisitStats>;
 export type CustomersPage = ReturnType<typeof getCustomersPage>;
+export type MemberOverview = ReturnType<typeof getMemberOverview>;
+export type CustomerProfile = NonNullable<ReturnType<typeof getCustomerProfile>>;
 export type StoreList = { stores: ReturnType<typeof listStores> };
 
 type Params = Record<string, string | number | undefined>;
@@ -68,6 +72,8 @@ export const queryKeys = {
   visitStats: (p: Partial<VisitStatsQuery>) => [...queryKeys.all, "visit-stats", p] as const,
   visit: (id: string) => [...queryKeys.all, "visit", id] as const,
   customers: (p: Partial<CustomersQuery>) => [...queryKeys.all, "customers", p] as const,
+  memberOverview: (store: string) => [...queryKeys.all, "member-overview", store] as const,
+  customer: (id: string) => [...queryKeys.all, "customer", id] as const,
 };
 
 /** A range is live while it includes today (store-local). */
@@ -138,11 +144,32 @@ export function useVisit(visitId: string | undefined) {
   });
 }
 
+/** Member activity includes today, so member queries refresh now and then. */
+const MEMBER_REFRESH_MS = 60_000;
+
 export function useCustomers(p: Partial<CustomersQuery>) {
   return useQuery({
     queryKey: queryKeys.customers(p),
     queryFn: () => fetchJson<CustomersPage>("/api/customers", { ...p }),
     placeholderData: keepPreviousData,
+    refetchInterval: MEMBER_REFRESH_MS,
+  });
+}
+
+/** Programme KPIs and segments for the members of a home store (or all). */
+export function useMemberOverview(store: string) {
+  return useQuery({
+    queryKey: queryKeys.memberOverview(store),
+    queryFn: () => fetchJson<MemberOverview>("/api/customers/overview", { store }),
+    refetchInterval: MEMBER_REFRESH_MS,
+  });
+}
+
+export function useCustomerProfile(customerId: string) {
+  return useQuery({
+    queryKey: queryKeys.customer(customerId),
+    queryFn: () => fetchJson<CustomerProfile>(`/api/customers/${customerId}`),
+    refetchInterval: MEMBER_REFRESH_MS,
   });
 }
 

@@ -107,7 +107,15 @@ describe("tables", () => {
   });
 
   it("pages, searches and filters customers", () => {
-    const base = { store: "all", tier: "all", sort: "visits", dir: "desc", page: 0, pageSize: 10 } as const;
+    const base = {
+      store: "all",
+      tier: "all",
+      segment: "all",
+      sort: "visits",
+      dir: "desc",
+      page: 0,
+      pageSize: 10,
+    } as const;
     const top = getCustomersPage(base, NOW);
     expect(top.total).toBe(CUSTOMER_COUNT);
     expect(top.rows[0].visits).toBeGreaterThanOrEqual(top.rows[9].visits);

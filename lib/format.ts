@@ -33,6 +33,15 @@ export function formatDateRange(from: string, to: string): string {
   return `${a.day} ${a.month} ${a.y} – ${b.day} ${b.month} ${b.y}`;
 }
 
+/** A past date relative to `today`: "Today", "Yesterday", "5 days ago", or "12 Oct 2026" beyond a month. */
+export function formatDaysAgo(date: string, today: string): string {
+  const days = Math.round((Date.parse(today) - Date.parse(date)) / 86_400_000);
+  if (days <= 0) return "Today";
+  if (days === 1) return "Yesterday";
+  if (days <= 30) return `${days} days ago`;
+  return formatDateRange(date, date);
+}
+
 /** 19 → "19:00". */
 export const formatHour = (hour: number | null) =>
   hour === null ? "—" : `${String(hour).padStart(2, "0")}:00`;
