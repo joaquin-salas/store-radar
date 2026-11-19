@@ -6,13 +6,14 @@
  */
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import type { RangePreset } from "@/lib/domain/schemas";
-import type { CustomersQuery, VisitStatsQuery, VisitsQuery } from "@/lib/domain/schemas";
+import type { CustomersQuery, FlowSegment, VisitStatsQuery, VisitsQuery } from "@/lib/domain/schemas";
 import type {
   DateRange,
   compareStores,
   getCustomerProfile,
   getCustomersPage,
   getMemberOverview,
+  getFlows,
   getFunnel,
   getHourProfile,
   getOverview,
@@ -41,6 +42,7 @@ export type Zones = ReturnType<typeof getZones>;
 export type Funnel = ReturnType<typeof getFunnel>;
 export type HourProfile = ReturnType<typeof getHourProfile>;
 export type StoreComparison = ReturnType<typeof compareStores>;
+export type Flows = ReturnType<typeof getFlows>;
 export type VisitsPage = ReturnType<typeof getVisitsPage>;
 export type VisitDetail = NonNullable<ReturnType<typeof getVisit>>;
 export type VisitStats = ReturnType<typeof getVisitStats>;
@@ -68,6 +70,7 @@ export const queryKeys = {
   funnel: (p: ScopeParams) => [...queryKeys.all, "funnel", p] as const,
   hours: (p: ScopeParams) => [...queryKeys.all, "hours", p] as const,
   compare: (p: ScopeParams) => [...queryKeys.all, "compare", p] as const,
+  flows: (p: FlowParams) => [...queryKeys.all, "flows", p] as const,
   visits: (p: Partial<VisitsQuery>) => [...queryKeys.all, "visits", p] as const,
   visitStats: (p: Partial<VisitStatsQuery>) => [...queryKeys.all, "visit-stats", p] as const,
   visit: (id: string) => [...queryKeys.all, "visit", id] as const,
@@ -104,6 +107,8 @@ export const useTraffic = (p: ScopeParams) => useScoped<Traffic>(queryKeys.traff
 export const useZones = (p: ScopeParams) => useScoped<Zones>(queryKeys.zones(p), "/api/zones", p);
 export const useFunnel = (p: ScopeParams) => useScoped<Funnel>(queryKeys.funnel(p), "/api/funnel", p);
 export const useHourProfile = (p: ScopeParams) => useScoped<HourProfile>(queryKeys.hours(p), "/api/hours", p);
+export type FlowParams = ScopeParams & { segment: FlowSegment };
+export const useFlows = (p: FlowParams) => useScoped<Flows>(queryKeys.flows(p), "/api/flows", p);
 export const useStoreComparison = (p: ScopeParams) =>
   useScoped<StoreComparison>(queryKeys.compare(p), "/api/compare", p);
 

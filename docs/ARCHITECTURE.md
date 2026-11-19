@@ -50,24 +50,25 @@ Next.js or React, which keeps it unit-testable and reusable by the AI tools.
 
 ### API (`app/api`)
 
-| Route                     | Query params                                                       | Returns                                                                                            |
-| ------------------------- | ------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------- |
-| `/api/stores`             | —                                                                  | Stores with open/closed status                                                                     |
-| `/api/stores/[id]/live`   | —                                                                  | People inside per zone, capacity, alerts, members inside, last 90 min (refetched every 5 s)        |
-| `/api/stores/[id]/pace`   | —                                                                  | KPIs vs. a typical day, forecast, usual peak, hourly profile                                       |
-| `/api/overview`           | `store`, `preset` \| `from`+`to`                                   | KPIs + previous-period KPIs                                                                        |
-| `/api/traffic`            | same + `granularity`                                               | Street vs. visitors series                                                                         |
-| `/api/zones`              | same                                                               | Visitors, visit rate, dwell per zone                                                               |
-| `/api/funnel`             | same                                                               | Street → entrance → browse → fitting → checkout                                                    |
-| `/api/hours`              | same                                                               | Average visitors per hour of day                                                                   |
-| `/api/compare`            | `preset` \| `from`+`to`                                            | KPIs per store                                                                                     |
-| `/api/visits`             | `store`, `date`, `segment`, `sort`, `dir`, `page`, `pageSize`      | Paginated visits                                                                                   |
-| `/api/visits/stats`       | `store`, `date`, `segment`                                         | Visit-length histogram (2-min buckets, finished visits) and median time per zone (completed stops) |
-| `/api/visits/[id]`        | —                                                                  | One visit with its timeline (time each zone was reached, when they left)                           |
-| `/api/customers`          | `q`, `store`, `tier`, `segment`, `sort`, `dir`, `page`, `pageSize` | Paginated members with 30-day activity, last visit and segment                                     |
-| `/api/customers/overview` | `store`                                                            | Programme KPIs (30 days vs. the 30 before) and segments by tier                                    |
-| `/api/customers/[id]`     | —                                                                  | Member profile: activity, 90-day calendar, stores, zones, recent visits                            |
-| `/api/chat`               | POST (AI SDK UI messages)                                          | Streamed assistant response                                                                        |
+| Route                     | Query params                                                       | Returns                                                                                                |
+| ------------------------- | ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------ |
+| `/api/stores`             | —                                                                  | Stores with open/closed status                                                                         |
+| `/api/stores/[id]/live`   | —                                                                  | People inside per zone, capacity, alerts, members inside, last 90 min (refetched every 5 s)            |
+| `/api/stores/[id]/pace`   | —                                                                  | KPIs vs. a typical day, forecast, usual peak, hourly profile                                           |
+| `/api/overview`           | `store`, `preset` \| `from`+`to`                                   | KPIs + previous-period KPIs                                                                            |
+| `/api/traffic`            | same + `granularity`                                               | Street vs. visitors series                                                                             |
+| `/api/zones`              | same                                                               | Visitors, visit rate, dwell per zone                                                                   |
+| `/api/funnel`             | same                                                               | Street → entrance → browse → fitting → checkout                                                        |
+| `/api/hours`              | same                                                               | Average visitors per hour of day                                                                       |
+| `/api/compare`            | `preset` \| `from`+`to`                                            | KPIs per store                                                                                         |
+| `/api/flows`              | same + `segment` (`all`, `new`, `returning`, `members`)            | Route KPIs vs. previous period, journey (Sankey), zone-to-zone matrix, top routes, cross-store members |
+| `/api/visits`             | `store`, `date`, `segment`, `sort`, `dir`, `page`, `pageSize`      | Paginated visits                                                                                       |
+| `/api/visits/stats`       | `store`, `date`, `segment`                                         | Visit-length histogram (2-min buckets, finished visits) and median time per zone (completed stops)     |
+| `/api/visits/[id]`        | —                                                                  | One visit with its timeline (time each zone was reached, when they left)                               |
+| `/api/customers`          | `q`, `store`, `tier`, `segment`, `sort`, `dir`, `page`, `pageSize` | Paginated members with 30-day activity, last visit and segment                                         |
+| `/api/customers/overview` | `store`                                                            | Programme KPIs (30 days vs. the 30 before) and segments by tier                                        |
+| `/api/customers/[id]`     | —                                                                  | Member profile: activity, 90-day calendar, stores, zones, recent visits                                |
+| `/api/chat`               | POST (AI SDK UI messages)                                          | Streamed assistant response                                                                            |
 
 `store` is a store id or `all`. `preset` is `today`, `yesterday`, `7d` or `30d`
 (the last two include today). Custom ranges are capped at 92 days.
@@ -143,6 +144,17 @@ assistant docks on the left and the page fills the rest.
   sensors can't know the rest of the route. Filters and sorts use the same view.
   Above the table, two charts for the same day and segment: how long visits
   last and median time per zone (`lib/domain/visit-stats.ts`).
+- **Flows** (`/<scope>/flows`, range + `?segment=new|returning|members`):
+  how visitors move, from the finished-visit routes stored in each daily
+  summary (`DaySummary.routes`, one map per visitor kind), so a 30-day chain
+  range needs no re-simulation (`lib/domain/flow-stats.ts`). Route KPIs vs.
+  the previous period; a journey Sankey (Recharts) where zones are split by
+  stop number (1st, 2nd, 3+ stops, then checkout or left without buying),
+  which keeps the graph acyclic although people go back to zones; a
+  zone-to-zone chord (d3-chord layout, drawn as React SVG) with a from × to
+  heatmap matrix as its table view; the top routes with checkout rate; and,
+  for All stores, members visiting other stores (chord + table). Zone colours
+  are fixed per zone; checkout and outcomes stay neutral.
 - **Assistant panel** (`components/assistant/`): lives in the root layout, so
   it keeps its state across navigation. On desktop (≥1024 px) it is a resizable
   panel (react-resizable-panels; open state and width remembered per browser);

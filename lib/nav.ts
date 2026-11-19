@@ -30,7 +30,7 @@ export const VIEWS: readonly ViewDef[] = [
   { id: "analytics", label: "Analytics", allStores: true, usesRange: true, ready: true },
   { id: "visits", label: "Visits", allStores: false, usesRange: false, ready: true },
   { id: "customers", label: "Customers", allStores: true, usesRange: false, ready: true },
-  { id: "flows", label: "Flows", allStores: true, usesRange: true, ready: false },
+  { id: "flows", label: "Flows", allStores: true, usesRange: true, ready: true },
 ];
 
 export const DEFAULT_STORE = STORES[0].id;

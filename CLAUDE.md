@@ -29,6 +29,7 @@ Read `docs/ARCHITECTURE.md` before structural changes.
 | `components/shell/`                   | App frame: header (store picker, view tabs), resizable workspace                            |
 | `components/assistant/`               | Assistant panel (docked on desktop, sheet on mobile) and its open state                     |
 | `components/live/`                    | Live view: floor plan, right-now panel, pace, loyalty members                               |
+| `components/flows/`                   | Flows view: journey Sankey, chord diagram (d3-chord), zone matrix, top routes               |
 | `app/globals.css`                     | Theme tokens (light on `:root`, dark on `.dark`)                                            |
 
 ## Rules
